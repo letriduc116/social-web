@@ -1,7 +1,7 @@
 package com.triduc.social.controller;
 
 import com.triduc.social.dto.ApiResponse;
-import com.triduc.social.dto.request.CommentRequestDTO;
+import com.triduc.social.dto.request.comment.CommentRequestDTO;
 import com.triduc.social.dto.response.user.CommentResponseDTO;
 import com.triduc.social.service.comment.CommentService;
 import jakarta.persistence.EntityNotFoundException;
@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.triduc.social.dto.request.ModifyCommentRequestDTO;
+import com.triduc.social.dto.request.comment.ModifyCommentRequestDTO;
 
 import java.util.List;
 

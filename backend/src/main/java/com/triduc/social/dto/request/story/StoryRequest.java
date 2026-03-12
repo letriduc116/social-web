@@ -1,4 +1,4 @@
-package com.triduc.social.dto.request;
+package com.triduc.social.dto.request.story;
 
 import com.triduc.social.entity.Story;
 import lombok.*;

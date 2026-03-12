@@ -1,9 +1,8 @@
-package com.triduc.social.dto.request;
+package com.triduc.social.dto.request.post;
 
 
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter

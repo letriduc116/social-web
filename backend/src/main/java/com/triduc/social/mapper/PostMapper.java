@@ -1,6 +1,6 @@
 package com.triduc.social.mapper;
 import org.springframework.context.annotation.Lazy;
-import com.triduc.social.dto.request.UpPostRequest;
+import com.triduc.social.dto.request.post.UpPostRequest;
 import com.triduc.social.dto.response.post.PostResponse;
 import com.triduc.social.entity.Post;
 import com.triduc.social.entity.PostImages;
@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

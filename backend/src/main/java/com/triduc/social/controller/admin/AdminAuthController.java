@@ -1,6 +1,6 @@
 package com.triduc.social.controller.admin;
 
-import com.triduc.social.dto.request.LoginRequest;
+import com.triduc.social.dto.request.auth.LoginRequest;
 import com.triduc.social.dto.response.user.AuthResponse;
 import com.triduc.social.entity.User;
 import com.triduc.social.enums.Role;

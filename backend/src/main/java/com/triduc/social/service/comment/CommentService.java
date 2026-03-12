@@ -1,6 +1,6 @@
 package com.triduc.social.service.comment;
 
-import com.triduc.social.dto.request.CommentRequestDTO;
+import com.triduc.social.dto.request.comment.CommentRequestDTO;
 import com.triduc.social.dto.response.user.CommentResponseDTO;
 import com.triduc.social.entity.Comment;
 import com.triduc.social.entity.CommentLike;

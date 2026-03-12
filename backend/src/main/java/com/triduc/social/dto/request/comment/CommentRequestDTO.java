@@ -1,4 +1,4 @@
-package com.triduc.social.dto.request;
+package com.triduc.social.dto.request.comment;
 import lombok.*;
 @Getter
 @Setter

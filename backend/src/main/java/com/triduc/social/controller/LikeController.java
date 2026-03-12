@@ -1,7 +1,7 @@
 package com.triduc.social.controller;
 
 import com.triduc.social.dto.ApiResponse;
-import com.triduc.social.dto.request.LikeRequest;
+import com.triduc.social.dto.request.post.LikeRequest;
 import com.triduc.social.entity.Like;
 import com.triduc.social.service.like.LikeService;
 import lombok.RequiredArgsConstructor;

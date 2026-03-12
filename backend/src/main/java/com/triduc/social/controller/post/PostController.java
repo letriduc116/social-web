@@ -1,7 +1,7 @@
 package com.triduc.social.controller.post;
 
 import com.triduc.social.dto.ApiResponse;
-import com.triduc.social.dto.request.UpPostRequest;
+import com.triduc.social.dto.request.post.UpPostRequest;
 import com.triduc.social.dto.response.post.PostResponse;
 import com.triduc.social.dto.response.user.PostProfileResponse;
 import com.triduc.social.entity.Post;
