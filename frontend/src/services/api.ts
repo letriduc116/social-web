@@ -5,17 +5,17 @@ const BASE_URL = 'http://localhost:8080/api';
 const ACCESS_TOKEN_KEY = 'accessToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
 
-export interface BaseApiResponse<T = unknown> {
+type CustomRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean;
+  skipAuth?: boolean;
+};
+
+export interface ApiResponse<T = unknown> {
   data: T;
   success?: boolean;
   message?: string;
   status?: number;
 }
-
-type CustomRequestConfig = InternalAxiosRequestConfig & {
-  _retry?: boolean;
-  skipAuth?: boolean;
-};
 
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -47,7 +47,7 @@ api.interceptors.response.use(
       return Promise.reject(new Error('Không thể kết nối đến máy chủ'));
     }
 
-    const responseData = error.response.data as BaseApiResponse | string | undefined;
+    const responseData = error.response.data as ApiResponse<unknown> | string | undefined;
 
     if (typeof responseData === 'string') {
       return Promise.reject(new Error(responseData));
@@ -143,13 +143,6 @@ export class ApiService {
   static getClient(): AxiosInstance {
     return api;
   }
-}
-
-export interface ApiResponse<T = unknown> {
-  data: T;
-  success?: boolean;
-  message?: string;
-  status?: number;
 }
 
 export default api;

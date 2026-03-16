@@ -1,5 +1,4 @@
 import { ApiService, type ApiResponse } from './api';
-
 import type {
   AuthResponse,
   CheckMailProps,
@@ -22,11 +21,11 @@ const unwrapAuth = (response: ApiResponse<AuthResponse> | AuthResponse): AuthRes
 
 const login = async (data: LoginProps): Promise<AuthResponse> => {
   const response = await ApiService.post<ApiResponse<AuthResponse> | AuthResponse>(`${API_URL}/login`, data);
-
   const authData = unwrapAuth(response);
 
   if (authData.accessToken) {
-    ApiService.setTokens(authData.accessToken, authData.refreshToken);
+    ApiService.setTokens(authData.accessToken);
+    localStorage.setItem('user', JSON.stringify(authData));
   }
 
   return authData;
@@ -34,30 +33,33 @@ const login = async (data: LoginProps): Promise<AuthResponse> => {
 
 const register = async (data: RegisterProps): Promise<AuthResponse> => {
   const response = await ApiService.post<ApiResponse<AuthResponse> | AuthResponse>(`${API_URL}/register`, data);
-
   const authData = unwrapAuth(response);
 
   if (authData.accessToken) {
-    ApiService.setTokens(authData.accessToken, authData.refreshToken);
+    ApiService.setTokens(authData.accessToken);
+    localStorage.setItem('user', JSON.stringify(authData));
   }
 
   return authData;
 };
 
 const checkMail = async (data: CheckMailProps) => {
-  return ApiService.get<ApiResponse<string>>(`${API_URL}/check-email`, data);
+  return ApiService.get<void, CheckMailProps>(`${API_URL}/check-email`, data);
 };
 
 const sendOtp = async (data: SendOtpProps) => {
-  return ApiService.post<ApiResponse<string>>(`${API_URL}/send-otp`, data);
+  return ApiService.post<void>(`${API_URL}/send-otp`, data);
 };
 
 const verifyOtp = async (data: VerifyOtpProps) => {
-  return ApiService.post<ApiResponse<void>>(`${API_URL}/verify-otp`, data);
+  return ApiService.post<void>(`${API_URL}/verify-otp`, data);
 };
 
 const resetPassword = async (data: ResetPasswordProps) => {
-  return ApiService.post<ApiResponse<void>>(`${API_URL}/reset-password`, data);
+  return ApiService.post<void>(`${API_URL}/reset-password`, {
+    email: data.email,
+    newPassword: data.newPassword,
+  });
 };
 
 const logout = (): void => {

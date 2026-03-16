@@ -7,7 +7,7 @@ export interface RegisterProps {
   email: string;
   password: string;
   fullName?: string;
-  username?: string;
+  userName?: string;
 }
 
 export interface SendOtpProps {
@@ -29,9 +29,22 @@ export interface CheckMailProps {
   email: string;
 }
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  userName: string;
+  fullName: string;
+  role: string;
+}
+
 export interface AuthResponse {
+  id?: string;
+  email?: string;
+  userName?: string;
+  fullName?: string;
+  role?: string;
   accessToken?: string;
   refreshToken?: string;
   token?: string;
-  user?: unknown;
+  user?: AuthUser;
 }
