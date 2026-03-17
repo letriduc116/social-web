@@ -1,4 +1,4 @@
-package com.triduc.social.dto.request;
+package com.triduc.social.dto.request.auth;
 
 import lombok.*;
 
@@ -7,7 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ResetPasswordRequest {
+public class OTPVerifyRequest {
     private String email;
-    private String newPassword;
+    private String otp;
 }

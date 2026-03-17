@@ -1,4 +1,4 @@
-package com.triduc.social.dto.request;
+package com.triduc.social.dto.request.auth;
 
 import lombok.*;
 
@@ -7,6 +7,6 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OTPRequest {
+public class ForgotPasswordRequest {
     private String email;
 }

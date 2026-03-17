@@ -1,8 +1,8 @@
 package com.triduc.social.service.user;
 import com.triduc.social.enums.Role;
 
-import com.triduc.social.dto.request.RegisterRequest;
-import com.triduc.social.dto.request.UpdateProfileRequest;
+import com.triduc.social.dto.request.auth.RegisterRequest;
+import com.triduc.social.dto.request.user.UpdateProfileRequest;
 import com.triduc.social.dto.response.story.StoryResponse;
 import com.triduc.social.dto.response.user.AuthResponse;
 import com.triduc.social.dto.response.user.PostProfileResponse;
@@ -34,7 +34,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;

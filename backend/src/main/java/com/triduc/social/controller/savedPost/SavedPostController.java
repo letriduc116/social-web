@@ -1,11 +1,9 @@
 package com.triduc.social.controller.savedPost;
 
 import com.triduc.social.dto.ApiResponse;
-import com.triduc.social.dto.request.SavedPostRequest;
+import com.triduc.social.dto.request.post.SavedPostRequest;
 import com.triduc.social.dto.response.post.PostResponse;
-import com.triduc.social.entity.SavedPost;
 import com.triduc.social.service.savedPost.SavedPostService;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

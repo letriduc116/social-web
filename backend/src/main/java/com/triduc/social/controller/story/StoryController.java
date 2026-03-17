@@ -1,7 +1,7 @@
 package com.triduc.social.controller.story;
 
 import com.triduc.social.dto.ApiResponse;
-import com.triduc.social.dto.request.StoryRequest;
+import com.triduc.social.dto.request.story.StoryRequest;
 import com.triduc.social.dto.response.story.StoryResponse;
 import com.triduc.social.dto.response.story.StoryViewResponse;
 import com.triduc.social.service.story.StoryService;

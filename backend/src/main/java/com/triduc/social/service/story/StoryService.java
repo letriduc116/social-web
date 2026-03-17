@@ -1,6 +1,6 @@
 package com.triduc.social.service.story;
 
-import com.triduc.social.dto.request.StoryRequest;
+import com.triduc.social.dto.request.story.StoryRequest;
 import com.triduc.social.dto.response.story.StoryResponse;
 import com.triduc.social.dto.response.story.StoryViewResponse;
 import com.triduc.social.entity.Story;

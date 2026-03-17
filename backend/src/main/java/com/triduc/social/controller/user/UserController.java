@@ -1,15 +1,13 @@
 package com.triduc.social.controller.user;
 
 import com.triduc.social.dto.ApiResponse;
-import com.triduc.social.dto.request.UpdateProfileRequest;
+import com.triduc.social.dto.request.user.UpdateProfileRequest;
 import com.triduc.social.dto.response.user.UserProfileResponse;
 import com.triduc.social.dto.response.user.UserResponse;
 import com.triduc.social.dto.response.user.UserSearchResponse;
-import com.triduc.social.entity.User;
 import com.triduc.social.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -17,14 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/users")

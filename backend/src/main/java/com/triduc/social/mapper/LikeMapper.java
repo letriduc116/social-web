@@ -1,6 +1,6 @@
 package com.triduc.social.mapper;
 
-import com.triduc.social.dto.request.LikeRequest;
+import com.triduc.social.dto.request.post.LikeRequest;
 import com.triduc.social.entity.Like;
 import com.triduc.social.entity.Post;
 import com.triduc.social.entity.User;

@@ -1,4 +1,4 @@
-package com.triduc.social.dto.request;
+package com.triduc.social.dto.request.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,10 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RegisterRequest {
+public class LoginRequest {
     private String email;
     private String password;
-    private String userName;
-    private String fullName;
-
 }

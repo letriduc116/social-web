@@ -1,6 +1,6 @@
 package com.triduc.social.controller.auth;
 
-import com.triduc.social.dto.request.*;
+import com.triduc.social.dto.request.auth.*;
 import com.triduc.social.dto.response.user.AuthResponse;
 import com.triduc.social.repository.user.UserRepository;
 import com.triduc.social.service.user.OtpService;

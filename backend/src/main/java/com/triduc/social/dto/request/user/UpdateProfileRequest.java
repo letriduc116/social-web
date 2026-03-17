@@ -1,4 +1,4 @@
-package com.triduc.social.dto.request;
+package com.triduc.social.dto.request.user;
 
 import lombok.Data;
 import lombok.Getter;

@@ -1,6 +1,6 @@
 package com.triduc.social.service.post;
 
-import com.triduc.social.dto.request.UpPostRequest;
+import com.triduc.social.dto.request.post.UpPostRequest;
 import com.triduc.social.dto.response.post.PostResponse;
 import com.triduc.social.dto.response.user.PostProfileResponse;
 import com.triduc.social.entity.Post;
@@ -10,14 +10,11 @@ import com.triduc.social.repository.post.PostRepository;
 import com.triduc.social.repository.savedPost.SavedPostDetailRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
