@@ -1,0 +1,257 @@
+.ducky-page {
+  min-height: 100vh;
+  background: #f0f2f5;
+  color: #1c1e21;
+}
+
+.ducky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 220px minmax(200px, 320px) 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  background: #fff;
+  border-bottom: 1px solid #dddfe2;
+}
+
+.ducky-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ducky-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: linear-gradient(120deg, #ffd53d, #ffb347);
+  font-size: 1.2rem;
+}
+
+.ducky-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ff8c00;
+}
+
+.ducky-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f0f2f5;
+  border-radius: 999px;
+  padding: 0.4rem 0.8rem;
+}
+
+.ducky-search input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
+.ducky-nav {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.ducky-nav button,
+.ducky-actions button,
+.ducky-sidebar button,
+.post-actions button {
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.ducky-nav button {
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  color: #65676b;
+  font-weight: 600;
+}
+
+.ducky-nav button:hover,
+.ducky-sidebar button:hover,
+.post-actions button:hover {
+  background: #e4e6eb;
+}
+
+.ducky-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ducky-actions button {
+  width: 36px;
+  height: 36px;
+  background: #e4e6eb;
+}
+
+.ducky-layout {
+  display: grid;
+  grid-template-columns: minmax(200px, 260px) minmax(320px, 1fr) minmax(200px, 260px);
+  gap: 1rem;
+  max-width: 1200px;
+  margin: 1rem auto 0;
+  padding: 0 1rem 2rem;
+}
+
+.ducky-sidebar {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  height: fit-content;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.ducky-sidebar h3 {
+  margin-bottom: 0.8rem;
+}
+
+.ducky-sidebar ul {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ducky-sidebar button {
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  background: transparent;
+}
+
+.right-sidebar li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #31a24c;
+}
+
+.ducky-feed {
+  display: grid;
+  gap: 1rem;
+}
+
+.ducky-composer,
+.ducky-post {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.ducky-composer {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.ducky-composer input {
+  flex: 1;
+  border: none;
+  border-radius: 999px;
+  background: #f0f2f5;
+  padding: 0.65rem 0.95rem;
+}
+
+.ducky-composer input:focus {
+  outline: 2px solid #ffd53d;
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: #fff8dc;
+  border: 1px solid #f2cf66;
+}
+
+.avatar.small {
+  width: 36px;
+  height: 36px;
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.8rem;
+}
+
+.post-header h4 {
+  font-size: 1rem;
+}
+
+.post-header span {
+  color: #65676b;
+  font-size: 0.85rem;
+}
+
+.post-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-top: 1rem;
+  border-top: 1px solid #e4e6eb;
+  padding-top: 0.8rem;
+}
+
+.post-actions button {
+  background: transparent;
+  padding: 0.45rem 0;
+  color: #65676b;
+  font-weight: 600;
+}
+
+@media (max-width: 1080px) {
+  .ducky-layout {
+    grid-template-columns: 230px minmax(320px, 1fr);
+  }
+
+  .right-sidebar {
+    display: none;
+  }
+
+  .ducky-header {
+    grid-template-columns: 220px minmax(180px, 1fr) auto;
+  }
+
+  .ducky-nav {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .ducky-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .left-sidebar {
+    display: none;
+  }
+
+  .ducky-header {
+    grid-template-columns: 1fr auto;
+  }
+
+  .ducky-search {
+    display: none;
+  }
+}
