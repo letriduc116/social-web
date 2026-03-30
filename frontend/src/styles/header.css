@@ -1,0 +1,155 @@
+.fb-header-appbar {
+  background: #ffffff !important;
+  color: #1c1e21 !important;
+  border-bottom: 1px solid #dddfe2;
+}
+
+.fb-header-toolbar {
+  min-height: 56px !important;
+  display: grid !important;
+  grid-template-columns: minmax(340px, 360px) 1fr 240px;
+  gap: 12px;
+  padding: 0 16px !important;
+}
+
+.fb-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fb-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.fb-brand-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #1877f2, #42a5f5);
+  color: #fff;
+}
+
+.fb-brand-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ff9800;
+}
+
+.fb-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(100%, 320px);
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #f0f2f5;
+  color: #65676b;
+  flex: 1;
+}
+
+.fb-search-box .MuiInputBase-root {
+  flex: 1;
+  min-width: 0;
+}
+
+.fb-search-box .MuiInputBase-input {
+  min-width: 0;
+  width: 100%;
+}
+
+.fb-header-center {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 6px;
+  height: 100%;
+}
+
+.fb-nav-btn {
+  min-width: 110px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: #65676b;
+  border-radius: 10px;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fb-nav-btn svg {
+  font-size: 28px;
+}
+
+.fb-nav-btn:hover {
+  background: #f2f3f5;
+}
+
+.fb-nav-btn.active {
+  color: #1877f2;
+}
+
+.fb-nav-btn.active::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 3px;
+  border-radius: 999px;
+  background: #1877f2;
+}
+
+.fb-header-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.fb-action-wrapper {
+  position: relative;
+}
+
+.fb-action-btn {
+  width: 40px !important;
+  height: 40px !important;
+  background: #e4e6eb !important;
+  color: #050505 !important;
+}
+
+.fb-action-btn.active {
+  background: #e7f3ff !important;
+  color: #1877f2 !important;
+}
+
+@media (max-width: 1080px) {
+  .fb-header-toolbar {
+    grid-template-columns: 280px 1fr 220px;
+  }
+}
+
+@media (max-width: 900px) {
+  .fb-header-toolbar {
+    grid-template-columns: 1fr auto;
+  }
+
+  .fb-header-center {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .fb-search-box {
+    display: none;
+  }
+}
