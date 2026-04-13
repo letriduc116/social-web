@@ -27,11 +27,24 @@ const api: AxiosInstance = axios.create({
   },
 });
 
+// Danh sách các endpoint liên quan đến xác thực mà không cần token
+const AUTH_WHITELIST = [
+  '/v1/auth/login',
+  '/v1/auth/register',
+  '/v1/auth/check-email',
+  '/v1/auth/send-otp',
+  '/v1/auth/verify-otp',
+  '/v1/auth/reset-password',
+];
+
 api.interceptors.request.use(
   (config: CustomRequestConfig) => {
     const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    const url = config.url ?? '';
 
-    if (!config.skipAuth && token?.trim()) {
+    const isAuthEndpoint = AUTH_WHITELIST.some((path) => url.includes(path));
+
+    if (!isAuthEndpoint && !config.skipAuth && token?.trim()) {
       config.headers.Authorization = `Bearer ${token.trim()}`;
     }
 
