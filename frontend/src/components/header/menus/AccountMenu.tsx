@@ -15,12 +15,15 @@ import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
 import FeedbackOutlinedIcon from '@mui/icons-material/FeedbackOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import ChevronRightOutlinedIcon from '@mui/icons-material/ChevronRightOutlined';
+import { useNavigate } from 'react-router-dom';
 import HeaderMenu from './HeaderMenu';
 
 function AccountMenu() {
+  const navigate = useNavigate();
+
   return (
     <HeaderMenu className="fb-account-menu">
-      <Paper elevation={2} className="fb-account-card">
+      <Paper elevation={2} className="fb-account-card" sx={{ cursor: 'pointer' }} onClick={() => navigate('/profile')}>
         <Avatar sx={{ width: 48, height: 48, bgcolor: '#90a4ae' }}>T</Avatar>
         <Box>
           <Typography fontWeight={700}>Trí Đức</Typography>

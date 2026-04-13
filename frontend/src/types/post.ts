@@ -43,6 +43,12 @@ export interface CreatePostPayload {
   user_Id: string;
 }
 
+export interface CreatePostModalPayload {
+  content: string;
+  files: File[];
+  privacy: 'public' | 'friends' | 'only_me';
+}
+
 export interface SavedPostPayload {
   postId: string;
   userId: string;

@@ -8,11 +8,14 @@ import MoreHorizOutlinedIcon from '@mui/icons-material/MoreHorizOutlined';
 import ThumbUpOffAltOutlinedIcon from '@mui/icons-material/ThumbUpOffAltOutlined';
 import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
+import { useNavigate } from 'react-router-dom';
 
 import HomeHeader from '../components/header/HomeHeader';
 import LeftSidebar from '../components/sidebar/LeftSidebar';
 import RightSidebar from '../components/sidebar/RightSidebar';
 import CreatePostModal from '../components/post/CreatePostModal';
+import { postService } from '../services/postService';
+import type { CreatePostModalPayload } from '../types/post';
 import '../styles/homepage.css';
 
 const posts = [
@@ -30,21 +33,34 @@ const posts = [
 
 function Homepage() {
   const [openCreatePost, setOpenCreatePost] = useState(false);
+  const [creatingPost, setCreatingPost] = useState(false);
+  const navigate = useNavigate();
+
+  const currentUserName = postService.getCurrentUserDisplayName();
+  const currentUserAvatarText = currentUserName.charAt(0).toUpperCase();
 
   const handleOpenCreatePost = () => {
     setOpenCreatePost(true);
   };
 
   const handleCloseCreatePost = () => {
+    if (creatingPost) return;
     setOpenCreatePost(false);
   };
 
-  const handleCreatePost = async (payload: {
-    content: string;
-    files: File[];
-    privacy: 'public' | 'friends' | 'only_me';
-  }) => {
-    console.log('Bài viết mới:', payload);
+  const handleCreatePost = async (payload: CreatePostModalPayload) => {
+    try {
+      setCreatingPost(true);
+      await postService.createPost(payload);
+      setOpenCreatePost(false);
+      navigate('/profile');
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : 'Đăng bài thất bại');
+      throw error;
+    } finally {
+      setCreatingPost(false);
+    }
   };
 
   return (
@@ -57,10 +73,10 @@ function Homepage() {
         <section className="ducky-feed" aria-label="News feed">
           <Paper className="fb-composer" elevation={1}>
             <Box className="fb-composer-top">
-              <Avatar sx={{ bgcolor: '#90a4ae' }}>T</Avatar>
+              <Avatar sx={{ bgcolor: '#90a4ae' }}>{currentUserAvatarText}</Avatar>
 
               <button type="button" className="fb-composer-trigger" onClick={handleOpenCreatePost}>
-                Bạn đang nghĩ gì vậy, Trí Đức?
+                Bạn đang nghĩ gì vậy, {currentUserName}?
               </button>
             </Box>
 
@@ -123,8 +139,8 @@ function Homepage() {
         open={openCreatePost}
         onClose={handleCloseCreatePost}
         onSubmit={handleCreatePost}
-        userName="Trí Đức"
-        userAvatarText="T"
+        userName={currentUserName}
+        userAvatarText={currentUserAvatarText}
       />
     </div>
   );

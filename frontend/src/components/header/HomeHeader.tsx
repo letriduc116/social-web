@@ -51,7 +51,7 @@ function HomeHeader() {
     <AppBar position="sticky" color="inherit" elevation={1} className="fb-header-appbar">
       <Toolbar className="fb-header-toolbar" ref={headerRef}>
         <Box className="fb-header-left">
-          <Box className="fb-brand">
+          <Box className="fb-brand" component="a" href="/">
             <Box className="fb-brand-logo">
               <SmartToyOutlinedIcon />
             </Box>
