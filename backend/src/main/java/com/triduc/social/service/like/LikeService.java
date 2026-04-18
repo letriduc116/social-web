@@ -22,4 +22,17 @@ public class LikeService {
         repo.findByUserIdAndPostId(request.getUser_Id(), request.getPost_Id())
                 .ifPresent(repo::delete);
     }
+
+    public boolean toggleLike(LikeRequest request) {
+        return repo.findByUserIdAndPostId(request.getUser_Id(), request.getPost_Id())
+                .map(existingLike -> {
+                    repo.delete(existingLike);
+                    return false; // Unliked
+                })
+                .orElseGet(() -> {
+                    Like newLike = mapper.toLike(request);
+                    repo.save(newLike);
+                    return true; // Liked
+                });
+    }
 }

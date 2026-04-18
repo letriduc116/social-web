@@ -25,18 +25,6 @@ export interface PostItem {
   user: PostUser;
 }
 
-export interface SavedPostProfile {
-  id: string;
-  content: string;
-  createdAt?: string;
-  likeCount: number;
-  commentCount: number;
-  imageUrls: PostImage[];
-  userId: string;
-  userName: string;
-  avatarUrl?: string;
-}
-
 export interface CreatePostPayload {
   content: string;
   postImages: string[];
@@ -49,20 +37,19 @@ export interface CreatePostModalPayload {
   privacy: 'public' | 'friends' | 'only_me';
 }
 
-export interface SavedPostPayload {
-  postId: string;
-  userId: string;
+export interface LikePostPayload {
+  post_Id: string;
+  user_Id: string;
 }
 
-export type PostFeedTab = 'all' | 'mine' | 'saved';
-
-export interface PostCollections {
-  all: PostItem[];
-  mine: PostItem[];
-  saved: PostItem[];
-}
-
-export interface PostComposerState {
+export interface SavedPostProfile {
+  id: string;
   content: string;
-  imageUrls: string[];
+  createAt?: string;
+  images: PostImage[];
+  comments: number;
+  likes: number;
+  liked: boolean;
+  savedPost: boolean;
+  user: PostUser;
 }

@@ -24,6 +24,13 @@ public class LikeController {
                 "Like success", null));
     }
 
+    @PostMapping("/toggle")
+    public ResponseEntity<ApiResponse> toggleLike(@RequestBody LikeRequest request) {
+        boolean liked = service.toggleLike(request);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(),
+                liked ? "Like success" : "Unlike success", liked));
+    }
+
     @DeleteMapping()
     public ResponseEntity<ApiResponse> unlike(@RequestBody LikeRequest request) {
         service.unlike(request);

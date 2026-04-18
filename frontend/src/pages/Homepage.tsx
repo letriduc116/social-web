@@ -1,43 +1,58 @@
-import { useState } from 'react';
-import { Avatar, Box, Button, Divider, IconButton, Paper, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Alert, Avatar, Box, Button, CircularProgress, Divider, Paper } from '@mui/material';
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import EmojiEmotionsOutlinedIcon from '@mui/icons-material/EmojiEmotionsOutlined';
-import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined';
-import MoreHorizOutlinedIcon from '@mui/icons-material/MoreHorizOutlined';
-import ThumbUpOffAltOutlinedIcon from '@mui/icons-material/ThumbUpOffAltOutlined';
-import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
-import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 import { useNavigate } from 'react-router-dom';
 
 import HomeHeader from '../components/header/HomeHeader';
 import LeftSidebar from '../components/sidebar/LeftSidebar';
 import RightSidebar from '../components/sidebar/RightSidebar';
 import CreatePostModal from '../components/post/CreatePostModal';
-import { postService } from '../services/postService';
-import type { CreatePostModalPayload } from '../types/post';
-import '../styles/homepage.css';
+import PostDetailModal from '../components/post/PostDetailModal';
+import FeedPostCard from '../components/post/FeedPostCard';
 
-const posts = [
-  {
-    author: 'Ducky Team',
-    time: '2 giờ trước',
-    content: 'Chào mừng bạn đến với Ducky! Kết nối với bạn bè, chia sẻ khoảnh khắc và lan tỏa năng lượng tích cực.',
-  },
-  {
-    author: 'Vịt Vàng',
-    time: '5 giờ trước',
-    content: 'Hôm nay trời đẹp quá, ai đi dạo hồ cùng mình không?',
-  },
-];
+import { postService } from '../services/postService';
+import { authStorage } from '../services/authStorage';
+import type { CreatePostModalPayload, PostItem } from '../types/post';
+import '../styles/homepage.css';
 
 function Homepage() {
   const [openCreatePost, setOpenCreatePost] = useState(false);
   const [creatingPost, setCreatingPost] = useState(false);
+
+  const [posts, setPosts] = useState<PostItem[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+  const [postsError, setPostsError] = useState('');
+
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [openPostDetail, setOpenPostDetail] = useState(false);
+
   const navigate = useNavigate();
 
-  const currentUserName = postService.getCurrentUserDisplayName();
+  // const currentUserId = authStorage.getCurrentUserId();
+  const currentUserName = authStorage.getCurrentUserName();
   const currentUserAvatarText = currentUserName.charAt(0).toUpperCase();
+
+  const selectedPost = posts.find((item) => item.id === selectedPostId) || null;
+
+  const fetchFeedPosts = async () => {
+    try {
+      setLoadingPosts(true);
+      setPostsError('');
+      const response = await postService.getAllPosts();
+      setPosts(response);
+    } catch (error) {
+      console.error(error);
+      setPostsError(error instanceof Error ? error.message : 'Không tải được bảng tin');
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFeedPosts();
+  }, []);
 
   const handleOpenCreatePost = () => {
     setOpenCreatePost(true);
@@ -60,6 +75,62 @@ function Homepage() {
       throw error;
     } finally {
       setCreatingPost(false);
+    }
+  };
+
+  const handleOpenPostDetail = (post: PostItem) => {
+    setSelectedPostId(post.id);
+    setOpenPostDetail(true);
+  };
+
+  const handleClosePostDetail = () => {
+    setOpenPostDetail(false);
+    setSelectedPostId(null);
+  };
+
+  const handleCommentClick = (event: React.MouseEvent, post: PostItem) => {
+    event.stopPropagation();
+    handleOpenPostDetail(post);
+  };
+
+  const updatePostInList = (updatedPost: PostItem) => {
+    setPosts((prev) => prev.map((item) => (item.id === updatedPost.id ? updatedPost : item)));
+  };
+
+  const increaseCommentCount = (postId: string, amount = 1) => {
+    setPosts((prev) =>
+      prev.map((item) =>
+        item.id === postId
+          ? {
+              ...item,
+              comments: item.comments + amount,
+            }
+          : item,
+      ),
+    );
+  };
+
+  const handleToggleLikePost = async (event: React.MouseEvent, post: PostItem) => {
+    event.stopPropagation();
+
+    const optimisticPost: PostItem = {
+      ...post,
+      liked: !post.liked,
+      likes: post.liked ? Math.max(0, post.likes - 1) : post.likes + 1,
+    };
+
+    updatePostInList(optimisticPost);
+
+    try {
+      if (post.liked) {
+        await postService.unlikePost(post.id);
+      } else {
+        await postService.likePost(post.id);
+      }
+    } catch (error) {
+      console.error(error);
+      updatePostInList(post);
+      alert(error instanceof Error ? error.message : 'Không thể thích bài viết');
     }
   };
 
@@ -95,41 +166,25 @@ function Homepage() {
             </Box>
           </Paper>
 
-          {posts.map((post) => (
-            <Paper className="fb-post-card" elevation={1} key={`${post.author}-${post.time}`}>
-              <Box className="fb-post-header">
-                <Box className="fb-post-author">
-                  <Avatar sx={{ bgcolor: '#1976d2' }}>{post.author.charAt(0)}</Avatar>
-                  <Box>
-                    <Typography fontWeight={700}>{post.author}</Typography>
-                    <Box className="fb-post-meta">
-                      <span>{post.time}</span>
-                      <PublicOutlinedIcon fontSize="inherit" />
-                    </Box>
-                  </Box>
-                </Box>
+          {loadingPosts && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+              <CircularProgress />
+            </Box>
+          )}
 
-                <IconButton>
-                  <MoreHorizOutlinedIcon />
-                </IconButton>
-              </Box>
+          {!loadingPosts && postsError && <Alert severity="error">{postsError}</Alert>}
 
-              <Typography className="fb-post-content">{post.content}</Typography>
-
-              <Box className="fb-post-stats">
-                <span>24 lượt thích</span>
-                <span>8 bình luận · 2 lượt chia sẻ</span>
-              </Box>
-
-              <Divider />
-
-              <Box className="fb-post-actions">
-                <Button startIcon={<ThumbUpOffAltOutlinedIcon />}>Thích</Button>
-                <Button startIcon={<ChatBubbleOutlineOutlinedIcon />}>Bình luận</Button>
-                <Button startIcon={<ShareOutlinedIcon />}>Chia sẻ</Button>
-              </Box>
-            </Paper>
-          ))}
+          {!loadingPosts &&
+            !postsError &&
+            posts.map((post) => (
+              <FeedPostCard
+                key={post.id}
+                post={post}
+                onOpenDetail={handleOpenPostDetail}
+                onCommentClick={handleCommentClick}
+                onToggleLike={handleToggleLikePost}
+              />
+            ))}
         </section>
 
         <RightSidebar />
@@ -141,6 +196,18 @@ function Homepage() {
         onSubmit={handleCreatePost}
         userName={currentUserName}
         userAvatarText={currentUserAvatarText}
+      />
+
+      <PostDetailModal
+        open={openPostDetail}
+        onClose={handleClosePostDetail}
+        post={selectedPost}
+        currentUserName={currentUserName}
+        currentUserAvatarText={currentUserAvatarText}
+        onPostUpdated={updatePostInList}
+        onCommentAdded={() => {
+          if (selectedPostId) increaseCommentCount(selectedPostId, 1);
+        }}
       />
     </div>
   );

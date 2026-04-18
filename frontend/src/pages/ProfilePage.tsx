@@ -15,6 +15,7 @@ import type { ProfileTabKey, UserProfileResponse, ProfilePost } from '../types/u
 import type { PostItem } from '../types/post';
 import { userService } from '../services/userService';
 import { postService } from '../services/postService';
+import { authStorage } from '../services/authStorage';
 import '../styles/profile.css';
 
 const mapPostItemToProfilePost = (post: PostItem): ProfilePost => {
@@ -56,7 +57,7 @@ function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const currentUserId = postService.getCurrentUserId();
+  const currentUserId = authStorage.getCurrentUserId();
   const targetUserId = routeUserId || currentUserId;
   const isOwner = targetUserId === currentUserId;
 
@@ -75,7 +76,7 @@ function ProfilePage() {
         let posts: ProfilePost[] = [];
 
         if (isOwner) {
-          const myPosts = await postService.getMyPosts(targetUserId);
+          const myPosts = await postService.getMyPosts();
           posts = myPosts.map(mapPostItemToProfilePost);
         }
 
