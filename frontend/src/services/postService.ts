@@ -60,6 +60,17 @@ const getMyPosts = async (): Promise<PostItem[]> => {
   return unwrap(response) || [];
 };
 
+const getPostsByUserId = async (userId: string): Promise<PostItem[]> => {
+  const currentUserId = authStorage.getCurrentUserId();
+
+  if (userId === currentUserId) {
+    return getMyPosts();
+  }
+
+  const allPosts = await getAllPosts();
+  return allPosts.filter((post) => post.user?.id === userId);
+};
+
 const getSavedPosts = async (): Promise<SavedPostProfile[]> => {
   const response = await ApiService.get<ApiResponse<SavedPostProfile[]> | SavedPostProfile[]>(`${API_URL}/saved`, {
     userId: authStorage.getCurrentUserId(),
@@ -93,6 +104,7 @@ export const postService = {
   createPost,
   getAllPosts,
   getMyPosts,
+  getPostsByUserId,
   getSavedPosts,
   likePost,
   unlikePost,

@@ -39,6 +39,8 @@ function PostDetailModal({
   const [submittingComment, setSubmittingComment] = useState(false);
   const [togglingLikePost, setTogglingLikePost] = useState(false);
 
+  const [replyingTo, setReplyingTo] = useState<CommentItem | null>(null);
+
   const currentUserId = useMemo(() => {
     try {
       return authStorage.getCurrentUserId();
@@ -51,6 +53,7 @@ function PostDetailModal({
     const fetchComments = async () => {
       if (!open || !post?.id) {
         setComments([]);
+        setReplyingTo(null);
         return;
       }
 
@@ -99,6 +102,21 @@ function PostDetailModal({
     }
   };
 
+  const insertReplyIntoTree = (items: CommentItem[], parentCommentId: string, newReply: CommentItem): CommentItem[] =>
+    items.map((item) => {
+      if (item.id === parentCommentId) {
+        return {
+          ...item,
+          replies: [...(item.replies || []), newReply],
+        };
+      }
+
+      return {
+        ...item,
+        replies: item.replies ? insertReplyIntoTree(item.replies, parentCommentId, newReply) : [],
+      };
+    });
+
   const handleAddComment = async () => {
     const content = commentValue.trim();
     if (!content || !currentUserId || submittingComment) return;
@@ -109,11 +127,17 @@ function PostDetailModal({
       const createdComment = await commentService.addComment({
         content,
         postId: post.id,
-        parentCommentId: null,
+        parentCommentId: replyingTo?.id || null,
       });
 
-      setComments((prev) => [...prev, createdComment]);
+      if (replyingTo?.id) {
+        setComments((prev) => insertReplyIntoTree(prev, replyingTo.id, createdComment));
+      } else {
+        setComments((prev) => [...prev, createdComment]);
+      }
+
       setCommentValue('');
+      setReplyingTo(null);
 
       onPostUpdated?.({
         ...post,
@@ -157,7 +181,11 @@ function PostDetailModal({
       const replaceTree = (items: CommentItem[]): CommentItem[] =>
         items.map((item) => {
           if (item.id === updatedComment.id) {
-            return updatedComment;
+            return {
+              ...item,
+              ...updatedComment,
+              replies: item.replies,
+            };
           }
 
           return {
@@ -172,6 +200,10 @@ function PostDetailModal({
       setComments(previousComments);
       alert(error instanceof Error ? error.message : 'Không thể thích bình luận');
     }
+  };
+
+  const handleReplyClick = (comment: CommentItem) => {
+    setReplyingTo(comment);
   };
 
   const renderComment = (comment: CommentItem, isReply = false) => (
@@ -192,7 +224,11 @@ function PostDetailModal({
           <button type="button" onClick={() => handleToggleLikeComment(comment.id)}>
             {comment.isLiked ? 'Đã thích' : 'Thích'}
           </button>
-          <button type="button">Trả lời</button>
+
+          <button type="button" onClick={() => handleReplyClick(comment)}>
+            Trả lời
+          </button>
+
           <span>{formatTime(comment.createdAt)}</span>
           {comment.likesCount > 0 ? <span>{comment.likesCount}</span> : null}
         </Box>
@@ -300,9 +336,29 @@ function PostDetailModal({
           <Avatar className="fb-post-detail-comment-input-avatar">{currentUserAvatarText}</Avatar>
 
           <Box className="fb-post-detail-comment-input-wrap">
+            {replyingTo ? (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  mb: 1,
+                  px: 1,
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  Đang trả lời: <strong>{replyingTo.sender?.fullName || replyingTo.sender?.userName}</strong>
+                </Typography>
+
+                <Button size="small" onClick={() => setReplyingTo(null)}>
+                  Huỷ
+                </Button>
+              </Box>
+            ) : null}
+
             <TextField
               fullWidth
-              placeholder="Viết bình luận..."
+              placeholder={replyingTo ? 'Viết phản hồi...' : 'Viết bình luận...'}
               value={commentValue}
               onChange={(e) => setCommentValue(e.target.value)}
               size="small"

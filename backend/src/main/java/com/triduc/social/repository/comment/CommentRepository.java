@@ -13,7 +13,7 @@ public interface CommentRepository extends JpaRepository<Comment, String> {
     @Query("SELECT c FROM Comment c WHERE c.post.id = :id AND c.parentComment IS NULL order by c.createAt ASC")
     List<Comment> findParentCommentsByPostId(@Param("id") String postId);
 
-    @Query("SELECT c FROM Comment c WHERE c.parentComment.id = :parentId")
+    @Query("SELECT c FROM Comment c WHERE c.parentComment.id = :parentId ORDER BY c.createAt ASC")
     List<Comment> findRepliesByParentId(@Param("parentId") String parentId);
 
     Optional<Comment> findById(@Param("id") String id);
