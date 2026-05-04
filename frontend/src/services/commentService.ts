@@ -39,7 +39,9 @@ const modifyComment = async (payload: ModifyCommentPayload): Promise<CommentItem
 };
 
 const deleteComment = async (commentId: string): Promise<void> => {
-  await ApiService.delete<ApiResponse<void>>(`${API_URL}/delete/${commentId}`);
+  await ApiService.delete<ApiResponse<void>>(`${API_URL}/delete/${commentId}`, {
+    params: { userId: authStorage.getCurrentUserId() },
+  });
 };
 
 const toggleLikeComment = async (commentId: string): Promise<CommentItem> => {
