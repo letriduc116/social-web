@@ -26,12 +26,12 @@ const getProfile = async (id: string): Promise<UserProfileResponse> => {
 
 const getFollowers = async (id: string): Promise<UserSummary[]> => {
   const response = await ApiService.get<ApiWrap<UserSummary[]> | UserSummary[]>(`${API_URL}/followers`, { id });
-  return unwrap(response);
+  return unwrap(response) || [];
 };
 
 const getFollowing = async (id: string): Promise<UserSummary[]> => {
   const response = await ApiService.get<ApiWrap<UserSummary[]> | UserSummary[]>(`${API_URL}/following`, { id });
-  return unwrap(response);
+  return unwrap(response) || [];
 };
 
 const followUser = async (id: string, targetId: string): Promise<void> => {
@@ -52,11 +52,37 @@ const updateProfile = async (
     fullName?: string;
     userName?: string;
     bio?: string;
+    profileImage?: string;
+    coverImage?: string;
   },
-) => {
-  return ApiService.put(`${API_URL}/updateProfile`, payload, {
+): Promise<UserSummary> => {
+  const response = await ApiService.put<ApiWrap<UserSummary> | UserSummary>(`${API_URL}/updateProfile`, payload, {
     params: { id },
   });
+
+  return unwrap(response);
+};
+
+const uploadProfileImage = async (id: string, file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await ApiService.upload<ApiWrap<string> | string>(`${API_URL}/uploadProfileImage`, formData, {
+    params: { id },
+  });
+
+  return unwrap(response);
+};
+
+const uploadCoverImage = async (id: string, file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await ApiService.upload<ApiWrap<string> | string>(`${API_URL}/uploadCoverImage`, formData, {
+    params: { id },
+  });
+
+  return unwrap(response);
 };
 
 export const userService = {
@@ -66,4 +92,6 @@ export const userService = {
   followUser,
   unfollowUser,
   updateProfile,
+  uploadProfileImage,
+  uploadCoverImage,
 };

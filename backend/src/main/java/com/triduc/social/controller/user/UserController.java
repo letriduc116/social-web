@@ -95,6 +95,36 @@ public class UserController {
         }
     }
 
+    @PostMapping("/uploadCoverImage")
+    public ResponseEntity<ApiResponse> uploadCoverImage(
+            @RequestParam("id") String id,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Không tìm thấy thông tin xác thực"));
+        }
+
+        String authenticatedUserId = userService.getIdByEmail(jwt.getSubject());
+        if (!id.equals(authenticatedUserId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(HttpStatus.FORBIDDEN.value(), "Bạn chỉ có thể cập nhật ảnh bìa của chính mình"));
+        }
+
+        try {
+            String imageUrl = userService.uploadAndSetCoverImage(id, file);
+            return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "Cập nhật ảnh bìa thành công", imageUrl));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(ApiResponse.error(e.getStatusCode().value(), e.getReason()));
+        } catch (Exception e) {
+            System.err.println("Lỗi khi tải ảnh bìa lên: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Lỗi server khi tải ảnh bìa lên: " + e.getMessage()));
+        }
+    }
+
 
     @PostMapping("/follow")
     public ResponseEntity<ApiResponse> followUser(

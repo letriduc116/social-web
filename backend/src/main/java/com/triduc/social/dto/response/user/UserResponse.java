@@ -18,8 +18,8 @@ public class UserResponse {
     private String fullName;
     private String email;
     private String profileImage;
+    private String coverImage;
     private String bio;
     private LocalDateTime lastSeen;
     private boolean isOnline;
-
 }

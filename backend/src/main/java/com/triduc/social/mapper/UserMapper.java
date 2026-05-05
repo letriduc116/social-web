@@ -25,6 +25,7 @@ public class UserMapper {
 		return UserResponse.builder().id(user.getId()).userName(user.getUserName()).fullName(user.getFullName())
 				.email(user.getEmail())
 				.profileImage(user.getProfileImage())
+				.coverImage(user.getCoverImage())
 				.bio(user.getBio())
 				.build();
 	}
@@ -44,6 +45,8 @@ public class UserMapper {
 				.userName(user.getUserName())
 				.fullName(user.getFullName())
 				.email(user.getEmail())
+				.profileImage(user.getProfileImage())
+				.coverImage(user.getCoverImage())
 				.role(user.getRole() != null ? user.getRole().name() : null)
 				.accessToken(accessToken).build();
 	}
@@ -98,6 +101,7 @@ public class UserMapper {
 				.userName(user.getUserName())
 				.fullName(user.getFullName())
 				.avatarUrl(user.getProfileImage())
+				.coverUrl(user.getCoverImage())
 				.bio(user.getBio())
 				.isFollowing(isFollowing)
 				.followersCount(followersCount)

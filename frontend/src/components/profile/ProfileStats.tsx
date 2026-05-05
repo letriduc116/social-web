@@ -1,22 +1,30 @@
 import { Box } from '@mui/material';
-import type { UserProfileResponse } from '../../types/user';
+import type { ProfileTabKey, UserProfileResponse } from '../../types/user';
 
 type Props = {
   profile: UserProfileResponse;
+  onSelectTab?: (tab: ProfileTabKey) => void;
 };
 
-function ProfileStats({ profile }: Props) {
+function ProfileStats({ profile, onSelectTab }: Props) {
+  const postCount = profile.postCount ?? profile.posts?.length ?? 0;
+
   return (
     <Box className="profile-stats">
-      <div>
-        <strong>{profile.postCount ?? profile.posts.length}</strong> bài viết
-      </div>
-      <div>
-        <strong>{profile.followersCount}</strong> người theo dõi
-      </div>
-      <div>
-        <strong>{profile.followingCount}</strong> đang theo dõi
-      </div>
+      <button type="button" className="profile-stat-item" onClick={() => onSelectTab?.('posts')}>
+        <strong>{postCount}</strong>
+        <span>bài viết</span>
+      </button>
+
+      <button type="button" className="profile-stat-item" onClick={() => onSelectTab?.('followers')}>
+        <strong>{profile.followersCount}</strong>
+        <span>người theo dõi</span>
+      </button>
+
+      <button type="button" className="profile-stat-item" onClick={() => onSelectTab?.('following')}>
+        <strong>{profile.followingCount}</strong>
+        <span>đang theo dõi</span>
+      </button>
     </Box>
   );
 }

@@ -6,6 +6,7 @@ export interface UserSummary {
   fullName?: string;
   email?: string;
   profileImage?: string;
+  coverImage?: string;
   bio?: string;
 }
 
@@ -34,8 +35,10 @@ export interface UserProfileResponse {
   userName?: string;
   fullName?: string;
   avatarUrl?: string;
+  coverUrl?: string;
   bio?: string;
   isFollowing: boolean;
+  isMe?: boolean;
   followersCount: number;
   followingCount: number;
   postCount?: number;
@@ -44,4 +47,4 @@ export interface UserProfileResponse {
   posts: ProfilePost[];
 }
 
-export type ProfileTabKey = 'posts' | 'followers' | 'following';
+export type ProfileTabKey = 'posts' | 'about' | 'followers' | 'following';
