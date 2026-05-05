@@ -5,7 +5,11 @@ import type {
   CreatePostPayload,
   LikePostPayload,
   PostItem,
+  PostPrivacy,
+  PostVisibility,
   SavedPostProfile,
+  SharePostModalPayload,
+  SharePostPayload,
 } from '../types/post';
 
 const API_URL = '/v1/post';
@@ -16,6 +20,18 @@ const unwrap = <T>(response: ApiResponse<T> | T): T => {
     return response.data as T;
   }
   return response as T;
+};
+
+const mapPrivacyToVisibility = (privacy?: PostPrivacy): PostVisibility => {
+  switch (privacy) {
+    case 'friends':
+      return 'FRIENDS';
+    case 'only_me':
+      return 'ONLY_ME';
+    case 'public':
+    default:
+      return 'EVERYONE';
+  }
 };
 
 const uploadImages = async (files: File[]): Promise<string[]> => {
@@ -38,9 +54,22 @@ const createPost = async (payload: CreatePostModalPayload): Promise<string> => {
     content: payload.content,
     postImages: await uploadImages(payload.files),
     user_Id: authStorage.getCurrentUserId(),
+    visibility: mapPrivacyToVisibility(payload.privacy),
   };
 
   const response = await ApiService.post<ApiResponse<string> | string, CreatePostPayload>(API_URL, body);
+  return unwrap(response);
+};
+
+const sharePost = async (originalPostId: string, payload: SharePostModalPayload): Promise<string> => {
+  const body: SharePostPayload = {
+    userId: authStorage.getCurrentUserId(),
+    originalPostId,
+    content: payload.content,
+    visibility: mapPrivacyToVisibility(payload.privacy),
+  };
+
+  const response = await ApiService.post<ApiResponse<string> | string, SharePostPayload>(`${API_URL}/share`, body);
   return unwrap(response);
 };
 
@@ -102,6 +131,7 @@ const unlikePost = async (postId: string): Promise<void> => {
 export const postService = {
   uploadImages,
   createPost,
+  sharePost,
   getAllPosts,
   getMyPosts,
   getPostsByUserId,

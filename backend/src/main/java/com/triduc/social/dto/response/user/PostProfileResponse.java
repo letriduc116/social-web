@@ -1,6 +1,7 @@
 package com.triduc.social.dto.response.user;
 
 import com.triduc.social.entity.PostImages;
+import com.triduc.social.enums.PostVisibility;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,4 +24,13 @@ public class PostProfileResponse {
         private String userId;
         private String userName;
         private String avatarUrl;
+
+        /** Quyền xem của bài viết/share */
+        private PostVisibility visibility;
+
+        /** true nếu đây là bài chia sẻ */
+        private boolean shared;
+
+        /** Bài viết gốc được nhúng bên trong bài share */
+        private PostProfileResponse sharedPost;
 }

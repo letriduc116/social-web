@@ -1,19 +1,19 @@
 package com.triduc.social.mapper;
 
 import com.triduc.social.dto.response.user.AuthResponse;
-//import com.xuandong.ChatApp.dto.response.user.ProfileResponse;
-//import com.xuandong.ChatApp.dto.response.user.SimpleUserResponse;
 import com.triduc.social.dto.response.user.PostProfileResponse;
 import com.triduc.social.dto.response.user.UserProfileResponse;
 import com.triduc.social.dto.response.user.UserResponse;
 import com.triduc.social.entity.Post;
 import com.triduc.social.entity.PostImages;
 import com.triduc.social.entity.User;
+import com.triduc.social.enums.PostVisibility;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,15 +40,23 @@ public class UserMapper {
 
 	public AuthResponse toAuthResponse(User user, String accessToken) {
 		return AuthResponse.builder()
-                .id(user.getId())
-                .userName(user.getUserName())
-                .fullName(user.getFullName())
+				.id(user.getId())
+				.userName(user.getUserName())
+				.fullName(user.getFullName())
 				.email(user.getEmail())
-                .role(user.getRole() != null ? user.getRole().name(): null)
-                .accessToken(accessToken).build();
+				.role(user.getRole() != null ? user.getRole().name() : null)
+				.accessToken(accessToken).build();
 	}
 
 	public PostProfileResponse toPostResponse(Post post) {
+		return toPostResponse(post, true);
+	}
+
+	private PostProfileResponse toPostResponse(Post post, boolean includeSharedPost) {
+		if (post == null) {
+			return null;
+		}
+
 		PostProfileResponse response = new PostProfileResponse();
 		response.setId(post.getId());
 		response.setContent(post.getContent());
@@ -58,9 +66,12 @@ public class UserMapper {
 		response.setUserId(post.getUser().getId());
 		response.setUserName(post.getUser().getUserName());
 		response.setAvatarUrl(post.getUser().getProfileImage());
+		response.setVisibility(post.getVisibility() == null ? PostVisibility.EVERYONE : post.getVisibility());
+		response.setShared(post.getSharedPost() != null);
 
-		// ✅ Ánh xạ postImages sang PostImage DTO cho FE
-		List<PostImages> images = post.getPostImages().stream()
+		List<PostImages> images = post.getPostImages() == null
+				? Collections.emptyList()
+				: post.getPostImages().stream()
 				.map(img -> {
 					PostImages dto = new PostImages();
 					dto.setId(img.getId());
@@ -70,9 +81,12 @@ public class UserMapper {
 
 		response.setImageUrls(images);
 
+		if (includeSharedPost && post.getSharedPost() != null) {
+			response.setSharedPost(toPostResponse(post.getSharedPost(), false));
+		}
+
 		return response;
 	}
-
 
 	public UserProfileResponse toUserProfileResponse(User user,
 													 boolean isFollowing,
@@ -91,5 +105,4 @@ public class UserMapper {
 				.posts(posts)
 				.build();
 	}
-
 }

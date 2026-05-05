@@ -1,5 +1,6 @@
 package com.triduc.social.service.user;
 import com.triduc.social.enums.Role;
+import com.triduc.social.enums.PostVisibility;
 
 import com.triduc.social.dto.request.auth.RegisterRequest;
 import com.triduc.social.dto.request.user.UpdateProfileRequest;
@@ -10,6 +11,7 @@ import com.triduc.social.dto.response.user.UserProfileResponse;
 import com.triduc.social.dto.response.user.UserResponse;
 import com.triduc.social.dto.response.user.UserSearchResponse;
 import com.triduc.social.entity.Follow;
+import com.triduc.social.entity.Post;
 import com.triduc.social.entity.User;
 import com.triduc.social.mapper.UserMapper;
 import com.triduc.social.repository.follow.FollowRepository;
@@ -131,10 +133,7 @@ public class UserService {
                 .map(mapper::toUserResponse)
                 .collect(Collectors.toList());
 
-        List<PostProfileResponse> posts = postRepository.findByUser_Id(profileUserId).stream()
-                .map(mapper::toPostResponse)
-                .sorted(Comparator.comparing(PostProfileResponse::getCreatedAt).reversed())
-                .collect(Collectors.toList());
+        List<PostProfileResponse> posts = getVisibleProfilePosts(profileUserId, currentUserId);
 
         return UserProfileResponse.builder()
                 .userId(profileUser.getId())
@@ -226,10 +225,8 @@ public class UserService {
     }
 
     public List<PostProfileResponse> getUserPosts(String userId) {
-        return postRepository.findByUser_Id(userId).stream()
-                .map(mapper::toPostResponse)
-                .sorted(Comparator.comparing(PostProfileResponse::getCreatedAt).reversed())
-                .collect(Collectors.toList());
+        // API cũ chỉ nhận userId, nên mặc định hiểu là chính user đó đang xem trang của mình.
+        return getVisibleProfilePosts(userId, userId);
     }
 
     public String getIdByEmail(String email) {
@@ -273,10 +270,7 @@ public class UserService {
         long followersCount = followRepository.countByUserId(userId);
         long followingCount = followRepository.countByFollowerId(userId);
 
-        List<PostProfileResponse> posts = postRepository.findByUser_Id(userId).stream()
-                .map(mapper::toPostResponse)
-                .sorted(Comparator.comparing(PostProfileResponse::getCreatedAt).reversed())
-                .collect(Collectors.toList());
+        List<PostProfileResponse> posts = getVisibleProfilePosts(userId, currentUserId);
 
         return mapper.toUserProfileResponse(user, isFollowing, followersCount, followingCount, posts);
     }
@@ -299,6 +293,54 @@ public class UserService {
                             .build();
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Lọc bài viết trên trang cá nhân theo quyền xem:
+     * - EVERYONE: ai cũng xem được
+     * - FRIENDS: chỉ hai người follow qua lại nhau mới xem được
+     * - ONLY_ME: chỉ chủ bài viết xem được
+     */
+    private List<PostProfileResponse> getVisibleProfilePosts(String profileUserId, String currentUserId) {
+        return postRepository.findByUser_Id(profileUserId).stream()
+                .filter(post -> canViewPostAndSharedOriginal(post, currentUserId))
+                .map(mapper::toPostResponse)
+                .sorted(Comparator.comparing(PostProfileResponse::getCreatedAt).reversed())
+                .collect(Collectors.toList());
+    }
+
+    private boolean canViewPostAndSharedOriginal(Post post, String currentUserId) {
+        if (!canViewPost(post, currentUserId)) {
+            return false;
+        }
+        return post.getSharedPost() == null || canViewPost(post.getSharedPost(), currentUserId);
+    }
+
+    private boolean canViewPost(Post post, String currentUserId) {
+        if (post == null || post.getUser() == null || currentUserId == null || currentUserId.isBlank()) {
+            return false;
+        }
+
+        String ownerId = post.getUser().getId();
+        if (ownerId.equals(currentUserId)) {
+            return true;
+        }
+
+        PostVisibility visibility = post.getVisibility() == null ? PostVisibility.EVERYONE : post.getVisibility();
+        if (visibility == PostVisibility.EVERYONE) {
+            return true;
+        }
+        if (visibility == PostVisibility.ONLY_ME) {
+            return false;
+        }
+
+        // FRIENDS: hiểu là hai người follow qua lại nhau.
+        return isFriend(ownerId, currentUserId);
+    }
+
+    private boolean isFriend(String userAId, String userBId) {
+        return followRepository.countByUserIdAndFollowerId(userAId, userBId) > 0
+                && followRepository.countByUserIdAndFollowerId(userBId, userAId) > 0;
     }
 
     @Transactional

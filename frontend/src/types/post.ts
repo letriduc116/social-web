@@ -13,6 +13,9 @@ export interface PostUser {
   isOnline?: boolean;
 }
 
+export type PostVisibility = 'EVERYONE' | 'FRIENDS' | 'ONLY_ME';
+export type PostPrivacy = 'public' | 'friends' | 'only_me';
+
 export interface PostItem {
   id: string;
   content: string;
@@ -23,18 +26,34 @@ export interface PostItem {
   liked: boolean;
   savedPost: boolean;
   user: PostUser;
+  visibility?: PostVisibility;
+  shared?: boolean;
+  sharedPost?: PostItem | null;
 }
 
 export interface CreatePostPayload {
   content: string;
   postImages: string[];
   user_Id: string;
+  visibility?: PostVisibility;
 }
 
 export interface CreatePostModalPayload {
   content: string;
   files: File[];
-  privacy: 'public' | 'friends' | 'only_me';
+  privacy: PostPrivacy;
+}
+
+export interface SharePostPayload {
+  userId: string;
+  originalPostId: string;
+  content?: string;
+  visibility?: PostVisibility;
+}
+
+export interface SharePostModalPayload {
+  content: string;
+  privacy: PostPrivacy;
 }
 
 export interface LikePostPayload {
@@ -52,4 +71,7 @@ export interface SavedPostProfile {
   liked: boolean;
   savedPost: boolean;
   user: PostUser;
+  visibility?: PostVisibility;
+  shared?: boolean;
+  sharedPost?: PostItem | null;
 }

@@ -9,17 +9,22 @@ import HomeHeader from '../components/header/HomeHeader';
 import LeftSidebar from '../components/sidebar/LeftSidebar';
 import RightSidebar from '../components/sidebar/RightSidebar';
 import CreatePostModal from '../components/post/CreatePostModal';
+import SharePostModal from '../components/post/SharePostModal';
 import PostDetailModal from '../components/post/PostDetailModal';
 import FeedPostCard from '../components/post/FeedPostCard';
 
 import { postService } from '../services/postService';
 import { authStorage } from '../services/authStorage';
-import type { CreatePostModalPayload, PostItem } from '../types/post';
+import type { CreatePostModalPayload, PostItem, SharePostModalPayload } from '../types/post';
 import '../styles/homepage.css';
 
 function Homepage() {
   const [openCreatePost, setOpenCreatePost] = useState(false);
   const [creatingPost, setCreatingPost] = useState(false);
+
+  const [openSharePost, setOpenSharePost] = useState(false);
+  const [sharingPost, setSharingPost] = useState<PostItem | null>(null);
+  const [sharingSubmitting, setSharingSubmitting] = useState(false);
 
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
@@ -30,7 +35,6 @@ function Homepage() {
 
   const navigate = useNavigate();
 
-  // const currentUserId = authStorage.getCurrentUserId();
   const currentUserName = authStorage.getCurrentUserName();
   const currentUserAvatarText = currentUserName.charAt(0).toUpperCase();
 
@@ -91,6 +95,40 @@ function Homepage() {
   const handleCommentClick = (event: React.MouseEvent, post: PostItem) => {
     event.stopPropagation();
     handleOpenPostDetail(post);
+  };
+
+  const handleOpenSharePost = (post: PostItem) => {
+    setSharingPost(post.sharedPost || post);
+    setOpenSharePost(true);
+  };
+
+  const handleShareClick = (event: React.MouseEvent, post: PostItem) => {
+    event.stopPropagation();
+    handleOpenSharePost(post);
+  };
+
+  const handleCloseSharePost = () => {
+    if (sharingSubmitting) return;
+    setOpenSharePost(false);
+    setSharingPost(null);
+  };
+
+  const handleSharePost = async (payload: SharePostModalPayload) => {
+    if (!sharingPost) return;
+
+    try {
+      setSharingSubmitting(true);
+      await postService.sharePost(sharingPost.id, payload);
+      setOpenSharePost(false);
+      setSharingPost(null);
+      navigate('/profile');
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : 'Chia sẻ bài viết thất bại');
+      throw error;
+    } finally {
+      setSharingSubmitting(false);
+    }
   };
 
   const updatePostInList = (updatedPost: PostItem) => {
@@ -183,6 +221,7 @@ function Homepage() {
                 onOpenDetail={handleOpenPostDetail}
                 onCommentClick={handleCommentClick}
                 onToggleLike={handleToggleLikePost}
+                onShareClick={handleShareClick}
               />
             ))}
         </section>
@@ -198,6 +237,15 @@ function Homepage() {
         userAvatarText={currentUserAvatarText}
       />
 
+      <SharePostModal
+        open={openSharePost}
+        onClose={handleCloseSharePost}
+        post={sharingPost}
+        onSubmit={handleSharePost}
+        userName={currentUserName}
+        userAvatarText={currentUserAvatarText}
+      />
+
       <PostDetailModal
         open={openPostDetail}
         onClose={handleClosePostDetail}
@@ -207,6 +255,10 @@ function Homepage() {
         onPostUpdated={updatePostInList}
         onCommentAdded={() => {
           if (selectedPostId) increaseCommentCount(selectedPostId, 1);
+        }}
+        onShareClick={(post) => {
+          setOpenPostDetail(false);
+          handleOpenSharePost(post);
         }}
       />
     </div>

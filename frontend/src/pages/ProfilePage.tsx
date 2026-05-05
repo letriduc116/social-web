@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Box, CircularProgress, Container } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import HomeHeader from '../components/header/HomeHeader';
 import ProfileHero from '../components/profile/ProfileHero';
@@ -10,10 +10,11 @@ import ProfileTabs from '../components/profile/ProfileTabs';
 import ProfileAboutCard from '../components/profile/ProfileAboutCard';
 import ProfileUserListCard from '../components/profile/ProfileUserListCard';
 import FeedPostCard from '../components/post/FeedPostCard';
+import SharePostModal from '../components/post/SharePostModal';
 import PostDetailModal from '../components/post/PostDetailModal';
 
 import type { ProfileTabKey, UserProfileResponse } from '../types/user';
-import type { PostItem } from '../types/post';
+import type { PostItem, SharePostModalPayload } from '../types/post';
 import { userService } from '../services/userService';
 import { postService } from '../services/postService';
 import { authStorage } from '../services/authStorage';
@@ -36,6 +37,7 @@ const createEmptyProfile = (): UserProfileResponse => ({
 
 function ProfilePage() {
   const { userId: routeUserId } = useParams();
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<ProfileTabKey>('posts');
   const [profile, setProfile] = useState<UserProfileResponse>(createEmptyProfile());
@@ -46,6 +48,10 @@ function ProfilePage() {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [openPostDetail, setOpenPostDetail] = useState(false);
 
+  const [openSharePost, setOpenSharePost] = useState(false);
+  const [sharingPost, setSharingPost] = useState<PostItem | null>(null);
+  const [sharingSubmitting, setSharingSubmitting] = useState(false);
+
   const currentUserId = authStorage.getCurrentUserId();
   const currentUserName = authStorage.getCurrentUserName();
   const currentUserAvatarText = currentUserName.charAt(0).toUpperCase();
@@ -55,37 +61,38 @@ function ProfilePage() {
 
   const selectedPost = posts.find((item) => item.id === selectedPostId) || null;
 
+  const fetchProfileData = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const [profileRes, followersRes, followingRes, userPosts] = await Promise.all([
+        userService.getProfile(targetUserId),
+        userService.getFollowers(targetUserId),
+        userService.getFollowing(targetUserId),
+        postService.getPostsByUserId(targetUserId),
+      ]);
+
+      setPosts(userPosts);
+
+      setProfile({
+        ...profileRes,
+        followers: followersRes || [],
+        followings: followingRes || [],
+        postCount: userPosts.length,
+        posts: [],
+      });
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Không thể tải trang cá nhân');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        setLoading(true);
-        setError('');
-
-        const [profileRes, followersRes, followingRes, userPosts] = await Promise.all([
-          userService.getProfile(targetUserId),
-          userService.getFollowers(targetUserId),
-          userService.getFollowing(targetUserId),
-          postService.getPostsByUserId(targetUserId),
-        ]);
-
-        setPosts(userPosts);
-
-        setProfile({
-          ...profileRes,
-          followers: followersRes || [],
-          followings: followingRes || [],
-          postCount: userPosts.length,
-          posts: [],
-        });
-      } catch (err) {
-        console.error(err);
-        setError(err instanceof Error ? err.message : 'Không thể tải trang cá nhân');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfileData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetUserId]);
 
   const profileData = useMemo(
@@ -109,6 +116,46 @@ function ProfilePage() {
   const handleCommentClick = (event: React.MouseEvent, post: PostItem) => {
     event.stopPropagation();
     handleOpenPostDetail(post);
+  };
+
+  const handleOpenSharePost = (post: PostItem) => {
+    setSharingPost(post.sharedPost || post);
+    setOpenSharePost(true);
+  };
+
+  const handleShareClick = (event: React.MouseEvent, post: PostItem) => {
+    event.stopPropagation();
+    handleOpenSharePost(post);
+  };
+
+  const handleCloseSharePost = () => {
+    if (sharingSubmitting) return;
+    setOpenSharePost(false);
+    setSharingPost(null);
+  };
+
+  const handleSharePost = async (payload: SharePostModalPayload) => {
+    if (!sharingPost) return;
+
+    try {
+      setSharingSubmitting(true);
+      await postService.sharePost(sharingPost.id, payload);
+      setOpenSharePost(false);
+      setSharingPost(null);
+
+      if (isOwner) {
+        const myPosts = await postService.getMyPosts();
+        setPosts(myPosts);
+      } else {
+        navigate('/profile');
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : 'Chia sẻ bài viết thất bại');
+      throw err;
+    } finally {
+      setSharingSubmitting(false);
+    }
   };
 
   const updatePostInList = (updatedPost: PostItem) => {
@@ -211,6 +258,7 @@ function ProfilePage() {
                       onOpenDetail={handleOpenPostDetail}
                       onCommentClick={handleCommentClick}
                       onToggleLike={handleToggleLikePost}
+                      onShareClick={handleShareClick}
                     />
                   ))
                 )}
@@ -228,6 +276,15 @@ function ProfilePage() {
         </Box>
       </Container>
 
+      <SharePostModal
+        open={openSharePost}
+        onClose={handleCloseSharePost}
+        post={sharingPost}
+        onSubmit={handleSharePost}
+        userName={currentUserName}
+        userAvatarText={currentUserAvatarText}
+      />
+
       <PostDetailModal
         open={openPostDetail}
         onClose={handleClosePostDetail}
@@ -239,6 +296,10 @@ function ProfilePage() {
           if (selectedPostId) {
             increaseCommentCount(selectedPostId, 1);
           }
+        }}
+        onShareClick={(post) => {
+          setOpenPostDetail(false);
+          handleOpenSharePost(post);
         }}
       />
     </div>

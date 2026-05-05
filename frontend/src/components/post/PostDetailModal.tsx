@@ -17,6 +17,8 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import MoreHorizOutlinedIcon from '@mui/icons-material/MoreHorizOutlined';
 import ThumbUpOffAltOutlinedIcon from '@mui/icons-material/ThumbUpOffAltOutlined';
 import ThumbUpAltOutlinedIcon from '@mui/icons-material/ThumbUpAlt';
@@ -30,6 +32,7 @@ import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined
 
 import type { CommentItem } from '../../types/comment';
 import type { PostDetailModalProps } from '../../types/component';
+import type { PostItem, PostVisibility } from '../../types/post';
 import { commentService } from '../../services/commentService';
 import { authStorage } from '../../services/authStorage';
 import { postService } from '../../services/postService';
@@ -59,6 +62,77 @@ function formatTime(value?: string) {
   return date.toLocaleDateString('vi-VN');
 }
 
+
+function getVisibilityMeta(visibility?: PostVisibility) {
+  switch (visibility) {
+    case 'FRIENDS':
+      return {
+        label: 'Bạn bè',
+        icon: <PeopleAltOutlinedIcon fontSize="inherit" />,
+      };
+    case 'ONLY_ME':
+      return {
+        label: 'Chỉ mình tôi',
+        icon: <LockOutlinedIcon fontSize="inherit" />,
+      };
+    case 'EVERYONE':
+    default:
+      return {
+        label: 'Mọi người',
+        icon: <PublicOutlinedIcon fontSize="inherit" />,
+      };
+  }
+}
+
+function getPostAuthorName(post?: PostItem | null) {
+  return post?.user?.fullName || post?.user?.userName || 'Người dùng';
+}
+
+function renderSharedPostPreview(sharedPost?: PostItem | null) {
+  if (!sharedPost) return null;
+
+  return (
+    <Box
+      className="fb-shared-post-preview"
+      sx={{
+        mt: 1.5,
+        border: '1px solid #dadde1',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        bgcolor: '#fff',
+      }}
+    >
+      {sharedPost.images?.length > 0 ? (
+        <Box className={`profile-post-image-grid ${sharedPost.images.length === 1 ? 'single' : ''}`}>
+          {sharedPost.images.map((img, index) => (
+            <div key={img.id || index} className="profile-post-image-item">
+              <img src={img.urlImage} alt={`shared-post-${index}`} />
+            </div>
+          ))}
+        </Box>
+      ) : null}
+
+      <Box sx={{ p: 1.5 }}>
+        <Box className="fb-post-author" sx={{ mb: 1 }}>
+          <Avatar src={sharedPost.user?.profileImage} sx={{ bgcolor: '#1976d2', width: 36, height: 36 }}>
+            {getPostAuthorName(sharedPost).charAt(0)}
+          </Avatar>
+
+          <Box>
+            <Typography fontWeight={700}>{getPostAuthorName(sharedPost)}</Typography>
+            <Box className="fb-post-meta">
+              <span>{formatTime(sharedPost.createAt)}</span>
+              {getVisibilityMeta(sharedPost.visibility).icon}
+            </Box>
+          </Box>
+        </Box>
+
+        {sharedPost.content ? <Typography className="fb-post-content">{sharedPost.content}</Typography> : null}
+      </Box>
+    </Box>
+  );
+}
+
 function getCommentDisplayName(comment?: CommentItem | null) {
   return comment?.sender?.fullName || comment?.sender?.userName || 'Người dùng';
 }
@@ -78,6 +152,7 @@ function PostDetailModal({
   currentUserAvatarText = 'T',
   onPostUpdated,
   onCommentAdded,
+  onShareClick,
 }: PostDetailModalProps) {
   const [commentValue, setCommentValue] = useState('');
   const [comments, setComments] = useState<CommentItem[]>([]);
@@ -129,6 +204,8 @@ function PostDetailModal({
   }, [open, post?.id]);
 
   if (!post) return null;
+
+  const isShare = Boolean(post.shared || post.sharedPost);
 
   const handleToggleLikePost = async () => {
     if (togglingLikePost) return;
@@ -460,9 +537,14 @@ function PostDetailModal({
 
                 <Box>
                   <Typography fontWeight={700}>{post.user?.fullName || post.user?.userName || 'Người dùng'}</Typography>
+                  {isShare && post.sharedPost ? (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: -0.2 }}>
+                      đã chia sẻ bài viết của {getPostAuthorName(post.sharedPost)}
+                    </Typography>
+                  ) : null}
                   <Box className="fb-post-meta">
                     <span>{formatTime(post.createAt)}</span>
-                    <PublicOutlinedIcon fontSize="inherit" />
+                    {getVisibilityMeta(post.visibility).icon}
                   </Box>
                 </Box>
               </Box>
@@ -483,6 +565,8 @@ function PostDetailModal({
                 ))}
               </Box>
             )}
+
+            {post.sharedPost ? renderSharedPostPreview(post.sharedPost) : null}
 
             <Box className="fb-post-detail-stats-row">
               <Box className="fb-post-detail-stats-left">
@@ -507,7 +591,7 @@ function PostDetailModal({
 
               <Button startIcon={<ChatBubbleOutlineOutlinedIcon />}>Bình luận</Button>
 
-              <Button startIcon={<ShareOutlinedIcon />}>Chia sẻ</Button>
+              <Button startIcon={<ShareOutlinedIcon />} onClick={() => onShareClick?.(post)}>Chia sẻ</Button>
             </Box>
 
             <Divider />
