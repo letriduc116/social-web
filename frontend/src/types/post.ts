@@ -13,6 +13,9 @@ export interface PostUser {
   isOnline?: boolean;
 }
 
+export type PostVisibility = 'EVERYONE' | 'FRIENDS' | 'ONLY_ME';
+export type PostPrivacy = 'public' | 'friends' | 'only_me';
+
 export interface PostItem {
   id: string;
   content: string;
@@ -23,46 +26,52 @@ export interface PostItem {
   liked: boolean;
   savedPost: boolean;
   user: PostUser;
-}
-
-export interface SavedPostProfile {
-  id: string;
-  content: string;
-  createdAt?: string;
-  likeCount: number;
-  commentCount: number;
-  imageUrls: PostImage[];
-  userId: string;
-  userName: string;
-  avatarUrl?: string;
+  visibility?: PostVisibility;
+  shared?: boolean;
+  sharedPost?: PostItem | null;
 }
 
 export interface CreatePostPayload {
   content: string;
   postImages: string[];
   user_Id: string;
+  visibility?: PostVisibility;
 }
 
 export interface CreatePostModalPayload {
   content: string;
   files: File[];
-  privacy: 'public' | 'friends' | 'only_me';
+  privacy: PostPrivacy;
 }
 
-export interface SavedPostPayload {
-  postId: string;
+export interface SharePostPayload {
   userId: string;
+  originalPostId: string;
+  content?: string;
+  visibility?: PostVisibility;
 }
 
-export type PostFeedTab = 'all' | 'mine' | 'saved';
-
-export interface PostCollections {
-  all: PostItem[];
-  mine: PostItem[];
-  saved: PostItem[];
-}
-
-export interface PostComposerState {
+export interface SharePostModalPayload {
   content: string;
-  imageUrls: string[];
+  privacy: PostPrivacy;
+}
+
+export interface LikePostPayload {
+  post_Id: string;
+  user_Id: string;
+}
+
+export interface SavedPostProfile {
+  id: string;
+  content: string;
+  createAt?: string;
+  images: PostImage[];
+  comments: number;
+  likes: number;
+  liked: boolean;
+  savedPost: boolean;
+  user: PostUser;
+  visibility?: PostVisibility;
+  shared?: boolean;
+  sharedPost?: PostItem | null;
 }

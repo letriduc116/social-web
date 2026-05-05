@@ -1,14 +1,11 @@
 package com.triduc.social.dto.response.post;
 
 import com.triduc.social.dto.response.user.UserResponse;
-import com.triduc.social.entity.Comment;
-import com.triduc.social.entity.Like;
 import com.triduc.social.entity.PostImages;
-import com.triduc.social.entity.User;
+import com.triduc.social.enums.PostVisibility;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -26,4 +23,13 @@ public class PostResponse {
     private boolean liked;
     private boolean savedPost;
     private UserResponse user;
+
+    /** Quyền xem của bài viết/share */
+    private PostVisibility visibility;
+
+    /** true nếu đây là bài chia sẻ */
+    private boolean shared;
+
+    /** Bài viết gốc được nhúng bên trong bài share */
+    private PostResponse sharedPost;
 }

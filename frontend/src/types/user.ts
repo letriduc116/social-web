@@ -1,3 +1,5 @@
+import type { PostVisibility } from './post';
+
 export interface UserSummary {
   id: string;
   userName?: string;
@@ -22,6 +24,9 @@ export interface ProfilePost {
   userName?: string;
   avatarUrl?: string;
   imageUrls: ProfilePostImage[];
+  visibility?: PostVisibility;
+  shared?: boolean;
+  sharedPost?: ProfilePost | null;
 }
 
 export interface UserProfileResponse {

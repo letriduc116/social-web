@@ -13,6 +13,7 @@ import com.triduc.social.repository.post.PostRepository;
 import com.triduc.social.repository.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,9 +77,15 @@ public class CommentService {
         return convertCommentToResponse(curentComment);
     }
 
-    public void deleteComment(String commentId) {
+    @Transactional
+    public void deleteComment(String commentId, String userId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(EntityNotFoundException::new);
+
+        if (comment.getSender() == null || !comment.getSender().getId().equals(userId)) {
+            throw new AccessDeniedException("Bạn chỉ có thể xoá bình luận của chính mình");
+        }
+
         commentRepository.delete(comment);
     }
 

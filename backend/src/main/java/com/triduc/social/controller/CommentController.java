@@ -8,6 +8,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 import com.triduc.social.dto.request.comment.ModifyCommentRequestDTO;
 
@@ -55,9 +56,11 @@ public class CommentController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable("id") String commentId) {
+    public ResponseEntity<ApiResponse<Void>> deleteComment(
+            @PathVariable("id") String commentId,
+            @RequestParam("userId") String userId) {
         try {
-            commentService.deleteComment(commentId);
+            commentService.deleteComment(commentId, userId);
             return ResponseEntity.ok(
                     ApiResponse.success(HttpStatus.OK.value(), "Xoá bình luận thành công.", null)
             );
@@ -65,6 +68,10 @@ public class CommentController {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error(HttpStatus.NOT_FOUND.value(), "Không tìm thấy bình luận."));
+        } catch (AccessDeniedException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(HttpStatus.FORBIDDEN.value(), "Bạn chỉ có thể xoá bình luận của chính mình."));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
