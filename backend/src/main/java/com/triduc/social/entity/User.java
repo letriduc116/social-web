@@ -8,8 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.Arrays;
-
 @Getter
 @Setter
 @AllArgsConstructor
@@ -29,6 +27,11 @@ public class User  {
     private String email;
     private String password;
     private String profileImage;
+
+    /** Ảnh bìa trang cá nhân */
+    @Column(name = "cover_image")
+    private String coverImage;
+
     private String bio;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -83,6 +86,14 @@ public class User  {
         this.profileImage = profileImage;
     }
 
+    public String getCoverImage() {
+        return coverImage;
+    }
+
+    public void setCoverImage(String coverImage) {
+        this.coverImage = coverImage;
+    }
+
     public String getBio() {
         return bio;
     }
@@ -96,6 +107,4 @@ public class User  {
     public void prePersist() {
         if (role == null) role = Role.USER;
     }
-
-
 }

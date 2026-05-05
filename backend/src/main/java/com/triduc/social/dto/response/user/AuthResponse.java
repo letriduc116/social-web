@@ -1,7 +1,5 @@
 package com.triduc.social.dto.response.user;
 
-
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,6 +16,8 @@ public class AuthResponse {
     private String email;
     private String userName;
     private String fullName;
+    private String profileImage;
+    private String coverImage;
     private String role;
     private String accessToken;
 }

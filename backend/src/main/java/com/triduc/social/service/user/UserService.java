@@ -140,8 +140,10 @@ public class UserService {
                 .userName(profileUser.getUserName())
                 .fullName(profileUser.getFullName())
                 .avatarUrl(profileUser.getProfileImage())
+                .coverUrl(profileUser.getCoverImage())
                 .bio(profileUser.getBio())
                 .isFollowing(isFollowing)
+                .isMe(profileUserId.equals(currentUserId))
                 .followersCount(followersCount)
                 .followingCount(followingCount)
                 .postCount(posts.size())
@@ -181,6 +183,33 @@ public class UserService {
 
 
 
+
+
+    /**
+     * Upload và cập nhật ảnh bìa trang cá nhân.
+     */
+    @Transactional
+    public String uploadAndSetCoverImage(String userId, MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File ảnh không được trống.");
+        }
+
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại"));
+
+            String imageUrl = fileService.uploadImageToCloudinary(file);
+            user.setCoverImage(imageUrl);
+            userRepository.save(user);
+
+            return imageUrl;
+
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi tải ảnh bìa lên Cloudinary: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi chung khi xử lý ảnh bìa: " + e.getMessage(), e);
+        }
+    }
 
     @Transactional
     public void follow(String currentUserId, String targetUserId) {
@@ -240,9 +269,21 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại"));
 
-        user.setFullName(request.getFullName());
-        user.setUserName(request.getUserName());
-        user.setBio(request.getBio());
+        if (request.getFullName() != null) {
+            user.setFullName(request.getFullName());
+        }
+        if (request.getUserName() != null) {
+            user.setUserName(request.getUserName());
+        }
+        if (request.getBio() != null) {
+            user.setBio(request.getBio());
+        }
+        if (request.getProfileImage() != null) {
+            user.setProfileImage(request.getProfileImage());
+        }
+        if (request.getCoverImage() != null) {
+            user.setCoverImage(request.getCoverImage());
+        }
 
         return mapper.toUserResponse(userRepository.save(user));
     }

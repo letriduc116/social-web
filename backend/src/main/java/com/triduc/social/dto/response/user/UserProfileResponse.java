@@ -16,6 +16,10 @@ public class UserProfileResponse {
     private String userName;
     private String fullName;
     private String avatarUrl;
+
+    /** Ảnh bìa trang cá nhân */
+    private String coverUrl;
+
     private String bio;
     private boolean isFollowing;
     private boolean isMe;
