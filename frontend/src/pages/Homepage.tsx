@@ -135,6 +135,10 @@ function Homepage() {
     setPosts((prev) => prev.map((item) => (item.id === updatedPost.id ? updatedPost : item)));
   };
 
+  const removePostFromList = (postId: string) => {
+    setPosts((prev) => prev.filter((item) => item.id !== postId));
+  };
+
   const increaseCommentCount = (postId: string, amount = 1) => {
     setPosts((prev) =>
       prev.map((item) =>
@@ -222,6 +226,8 @@ function Homepage() {
                 onCommentClick={handleCommentClick}
                 onToggleLike={handleToggleLikePost}
                 onShareClick={handleShareClick}
+                onPostUpdated={updatePostInList}
+                onPostDeleted={removePostFromList}
               />
             ))}
         </section>
@@ -253,6 +259,10 @@ function Homepage() {
         currentUserName={currentUserName}
         currentUserAvatarText={currentUserAvatarText}
         onPostUpdated={updatePostInList}
+        onPostDeleted={(postId) => {
+          removePostFromList(postId);
+          handleClosePostDetail();
+        }}
         onCommentAdded={() => {
           if (selectedPostId) increaseCommentCount(selectedPostId, 1);
         }}

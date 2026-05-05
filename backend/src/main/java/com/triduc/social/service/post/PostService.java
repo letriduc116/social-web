@@ -1,6 +1,7 @@
 package com.triduc.social.service.post;
 
 import com.triduc.social.dto.request.post.SharePostRequest;
+import com.triduc.social.dto.request.post.UpdatePostRequest;
 import com.triduc.social.dto.request.post.UpPostRequest;
 import com.triduc.social.dto.response.post.PostResponse;
 import com.triduc.social.dto.response.user.PostProfileResponse;
@@ -125,6 +126,45 @@ public class PostService {
 
         Post saved = repo.save(sharedPost);
         return postMapper.toPostResponse(saved, sharer.getId());
+    }
+
+
+    /**
+     * Chỉnh sửa bài viết của chính mình hoặc bài viết đã share về trang cá nhân.
+     * Với bài share, chỉ sửa caption của bài share và quyền xem của bài share, không đụng vào bài gốc.
+     */
+    @Transactional
+    public PostResponse updatePost(String postId, UpdatePostRequest request, String authenticatedEmail) {
+        if (postId == null || postId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thiếu postId");
+        }
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dữ liệu chỉnh sửa không hợp lệ");
+        }
+        if (authenticatedEmail == null || authenticatedEmail.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không tìm thấy thông tin xác thực");
+        }
+
+        User currentUser = userRepository.findByEmail(authenticatedEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Người dùng không tồn tại"));
+
+        Post post = repo.findById(postId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bài viết không tồn tại"));
+
+        if (post.getUser() == null || !post.getUser().getId().equals(currentUser.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn chỉ có thể chỉnh sửa bài viết của chính mình");
+        }
+
+        if (request.getContent() != null) {
+            post.setContent(request.getContent().trim());
+        }
+
+        if (request.getVisibility() != null) {
+            post.setVisibility(request.getVisibility());
+        }
+
+        Post updatedPost = repo.save(post);
+        return postMapper.toPostResponse(updatedPost, currentUser.getId());
     }
 
     @Transactional
