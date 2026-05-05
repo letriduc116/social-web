@@ -2,6 +2,7 @@ package com.triduc.social.controller.post;
 
 import com.triduc.social.dto.ApiResponse;
 import com.triduc.social.dto.request.post.SharePostRequest;
+import com.triduc.social.dto.request.post.UpdatePostRequest;
 import com.triduc.social.dto.request.post.UpPostRequest;
 import com.triduc.social.dto.response.post.PostResponse;
 import com.triduc.social.dto.response.user.PostProfileResponse;
@@ -11,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -69,6 +72,29 @@ public class PostController {
         PostResponse sharedPost = postService.sharePost(request);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(),
                 "Chia sẻ bài viết thành công", sharedPost));
+    }
+
+
+    /**
+     * Chỉnh sửa bài viết của chính mình.
+     * Áp dụng được cho cả bài đăng thường và bài share về trang cá nhân.
+     * - Bài đăng thường: sửa content và visibility.
+     * - Bài share: sửa caption share và visibility, không sửa nội dung bài gốc.
+     */
+    @PutMapping("/update")
+    public ResponseEntity<ApiResponse<PostResponse>> updatePost(
+            @RequestParam("postId") String postId,
+            @RequestBody UpdatePostRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        if (jwt == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Không tìm thấy thông tin xác thực"));
+        }
+
+        PostResponse updatedPost = postService.updatePost(postId, request, jwt.getSubject());
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(),
+                "Cập nhật bài viết thành công", updatedPost));
     }
 
     @DeleteMapping

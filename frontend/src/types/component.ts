@@ -25,6 +25,8 @@ export interface FeedPostCardProps {
   onCommentClick: (event: MouseEvent, post: PostItem) => void;
   onToggleLike: (event: MouseEvent, post: PostItem) => void;
   onShareClick?: (event: MouseEvent, post: PostItem) => void;
+  onPostUpdated?: (post: PostItem) => void;
+  onPostDeleted?: (postId: string) => void;
 }
 
 export interface PostDetailModalProps {
@@ -36,6 +38,7 @@ export interface PostDetailModalProps {
   onPostUpdated?: (post: PostItem) => void;
   onCommentAdded?: () => void;
   onShareClick?: (post: PostItem) => void;
+  onPostDeleted?: (postId: string) => void;
 }
 
 export interface PostCardProps {

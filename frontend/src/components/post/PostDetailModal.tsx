@@ -32,10 +32,14 @@ import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined
 
 import type { CommentItem } from '../../types/comment';
 import type { PostDetailModalProps } from '../../types/component';
-import type { PostItem, PostVisibility } from '../../types/post';
+import type { PostItem, PostVisibility, UpdatePostPayload } from '../../types/post';
 import { commentService } from '../../services/commentService';
 import { authStorage } from '../../services/authStorage';
 import { postService } from '../../services/postService';
+import PostOptionsMenu from './PostOptionsMenu';
+import ReportPostModal from './ReportPostModal';
+import DeletePostConfirmDialog from './DeletePostConfirmDialog';
+import EditPostModal from './EditPostModal';
 
 type ReplyTarget = {
   comment: CommentItem;
@@ -153,6 +157,7 @@ function PostDetailModal({
   onPostUpdated,
   onCommentAdded,
   onShareClick,
+  onPostDeleted,
 }: PostDetailModalProps) {
   const [commentValue, setCommentValue] = useState('');
   const [comments, setComments] = useState<CommentItem[]>([]);
@@ -160,6 +165,12 @@ function PostDetailModal({
   const [submittingComment, setSubmittingComment] = useState(false);
   const [togglingLikePost, setTogglingLikePost] = useState(false);
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+  const [openReportPost, setOpenReportPost] = useState(false);
+  const [openDeletePostConfirm, setOpenDeletePostConfirm] = useState(false);
+  const [openEditPost, setOpenEditPost] = useState(false);
+  const [savingPost, setSavingPost] = useState(false);
+  const [deletingPost, setDeletingPost] = useState(false);
+  const [editingPost, setEditingPost] = useState(false);
 
   const [replyingTo, setReplyingTo] = useState<ReplyTarget | null>(null);
 
@@ -185,6 +196,9 @@ function PostDetailModal({
         setSelectedCommentForMenu(null);
         setDeleteConfirmOpen(false);
         setCommentToDelete(null);
+        setOpenReportPost(false);
+        setOpenDeletePostConfirm(false);
+        setOpenEditPost(false);
         return;
       }
 
@@ -206,6 +220,85 @@ function PostDetailModal({
   if (!post) return null;
 
   const isShare = Boolean(post.shared || post.sharedPost);
+  const isOwner = currentUserId === post.user?.id;
+
+  const handleToggleSavePost = async () => {
+    if (savingPost || isOwner) return;
+
+    const previousPost = post;
+    const optimisticPost: PostItem = { ...post, savedPost: !post.savedPost };
+    onPostUpdated?.(optimisticPost);
+
+    try {
+      setSavingPost(true);
+      if (post.savedPost) {
+        await postService.unsavePost(post.id);
+      } else {
+        await postService.savePost(post.id);
+      }
+    } catch (error) {
+      console.error(error);
+      onPostUpdated?.(previousPost);
+      alert(error instanceof Error ? error.message : 'Không thể lưu bài viết');
+    } finally {
+      setSavingPost(false);
+    }
+  };
+
+  const handleReportPost = async (reasonId: string) => {
+    await postService.reportPost(post.id, reasonId);
+  };
+
+  const handleHidePost = () => {
+    onPostDeleted?.(post.id);
+    onClose();
+  };
+
+  const handleDeletePost = async () => {
+    if (deletingPost || !isOwner) return;
+
+    try {
+      setDeletingPost(true);
+      await postService.deletePost(post.id);
+      setOpenDeletePostConfirm(false);
+      onPostDeleted?.(post.id);
+      onClose();
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : 'Không thể xoá bài viết');
+    } finally {
+      setDeletingPost(false);
+    }
+  };
+
+  const handleEditPost = async (payload: UpdatePostPayload) => {
+    if (editingPost || !isOwner) return;
+
+    const previousPost = post;
+    const optimisticPost: PostItem = {
+      ...post,
+      content: payload.content ?? post.content,
+      visibility: payload.visibility ?? post.visibility,
+    };
+
+    try {
+      setEditingPost(true);
+      onPostUpdated?.(optimisticPost);
+      const updatedPost = await postService.updatePost(post.id, payload);
+      onPostUpdated?.(updatedPost || optimisticPost);
+      setOpenEditPost(false);
+    } catch (error) {
+      console.error(error);
+      onPostUpdated?.(previousPost);
+      alert(
+        error instanceof Error
+          ? `${error.message}. Nếu backend chưa có API chỉnh sửa bài viết, hãy thêm endpoint PUT /api/v1/post/update.`
+          : 'Không thể chỉnh sửa bài viết',
+      );
+    } finally {
+      setEditingPost(false);
+    }
+  };
 
   const handleToggleLikePost = async () => {
     if (togglingLikePost) return;
@@ -549,9 +642,16 @@ function PostDetailModal({
                 </Box>
               </Box>
 
-              <IconButton>
-                <MoreHorizOutlinedIcon />
-              </IconButton>
+              <PostOptionsMenu
+                post={post}
+                isOwner={isOwner}
+                disabled={savingPost || deletingPost || editingPost}
+                onEdit={() => setOpenEditPost(true)}
+                onDelete={() => setOpenDeletePostConfirm(true)}
+                onToggleSave={handleToggleSavePost}
+                onReport={() => setOpenReportPost(true)}
+                onHide={handleHidePost}
+              />
             </Box>
 
             <Typography className="fb-post-content fb-post-detail-main-content">{post.content}</Typography>
@@ -738,6 +838,28 @@ function PostDetailModal({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ReportPostModal
+        open={openReportPost}
+        post={post}
+        onClose={() => setOpenReportPost(false)}
+        onSubmit={handleReportPost}
+      />
+
+      <DeletePostConfirmDialog
+        open={openDeletePostConfirm}
+        deleting={deletingPost}
+        onClose={() => setOpenDeletePostConfirm(false)}
+        onConfirm={handleDeletePost}
+      />
+
+      <EditPostModal
+        open={openEditPost}
+        post={post}
+        saving={editingPost}
+        onClose={() => setOpenEditPost(false)}
+        onSubmit={handleEditPost}
+      />
     </>
   );
 }

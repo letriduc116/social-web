@@ -56,6 +56,11 @@ export interface SharePostModalPayload {
   privacy: PostPrivacy;
 }
 
+export interface UpdatePostPayload {
+  content?: string;
+  visibility?: PostVisibility;
+}
+
 export interface LikePostPayload {
   post_Id: string;
   user_Id: string;

@@ -10,10 +10,12 @@ import type {
   SavedPostProfile,
   SharePostModalPayload,
   SharePostPayload,
+  UpdatePostPayload,
 } from '../types/post';
 
 const API_URL = '/v1/post';
 const LIKE_API_URL = '/v1/like';
+const SAVED_POST_API_URL = '/v1/saved-post';
 
 const unwrap = <T>(response: ApiResponse<T> | T): T => {
   if (response && typeof response === 'object' && 'data' in response) {
@@ -61,7 +63,7 @@ const createPost = async (payload: CreatePostModalPayload): Promise<string> => {
   return unwrap(response);
 };
 
-const sharePost = async (originalPostId: string, payload: SharePostModalPayload): Promise<string> => {
+const sharePost = async (originalPostId: string, payload: SharePostModalPayload): Promise<PostItem> => {
   const body: SharePostPayload = {
     userId: authStorage.getCurrentUserId(),
     originalPostId,
@@ -69,7 +71,7 @@ const sharePost = async (originalPostId: string, payload: SharePostModalPayload)
     visibility: mapPrivacyToVisibility(payload.privacy),
   };
 
-  const response = await ApiService.post<ApiResponse<string> | string, SharePostPayload>(`${API_URL}/share`, body);
+  const response = await ApiService.post<ApiResponse<PostItem> | PostItem, SharePostPayload>(`${API_URL}/share`, body);
   return unwrap(response);
 };
 
@@ -92,12 +94,12 @@ const getMyPosts = async (): Promise<PostItem[]> => {
 const getPostsByUserId = async (userId: string): Promise<PostItem[]> => {
   const currentUserId = authStorage.getCurrentUserId();
 
-  if (userId === currentUserId) {
-    return getMyPosts();
-  }
+  const response = await ApiService.get<ApiResponse<PostItem[]> | PostItem[]>(`${API_URL}/user`, {
+    userId,
+    viewerId: currentUserId,
+  });
 
-  const allPosts = await getAllPosts();
-  return allPosts.filter((post) => post.user?.id === userId);
+  return unwrap(response) || [];
 };
 
 const getSavedPosts = async (): Promise<SavedPostProfile[]> => {
@@ -106,6 +108,42 @@ const getSavedPosts = async (): Promise<SavedPostProfile[]> => {
   });
 
   return unwrap(response) || [];
+};
+
+
+const updatePost = async (postId: string, payload: UpdatePostPayload): Promise<PostItem> => {
+  const response = await ApiService.put<ApiResponse<PostItem> | PostItem, UpdatePostPayload>(`${API_URL}/update`, payload, {
+    params: { postId },
+  });
+
+  return unwrap(response);
+};
+
+const deletePost = async (postId: string): Promise<void> => {
+  await ApiService.delete<ApiResponse<null>>(API_URL, {
+    params: { postId },
+  });
+};
+
+const savePost = async (postId: string): Promise<void> => {
+  await ApiService.post<ApiResponse<null>, { postId: string; userId: string }>(`${SAVED_POST_API_URL}/save`, {
+    postId,
+    userId: authStorage.getCurrentUserId(),
+  });
+};
+
+const unsavePost = async (postId: string): Promise<void> => {
+  await ApiService.delete<ApiResponse<null>>(`${SAVED_POST_API_URL}/delete`, {
+    data: {
+      postId,
+      userId: authStorage.getCurrentUserId(),
+    },
+  });
+};
+
+const reportPost = async (postId: string, reasonId: string): Promise<void> => {
+  // Hiện tại BE chưa có API report. Giữ dạng async để sau này thay bằng POST /v1/post/report.
+  console.log('Report post:', { postId, reasonId });
 };
 
 const likePost = async (postId: string): Promise<void> => {
@@ -136,6 +174,11 @@ export const postService = {
   getMyPosts,
   getPostsByUserId,
   getSavedPosts,
+  updatePost,
+  deletePost,
+  savePost,
+  unsavePost,
+  reportPost,
   likePost,
   unlikePost,
 };
