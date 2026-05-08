@@ -1,8 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100;0,400;0,500;0,600;0,700;1,300;1,400&display=swap');
 
 :root {
-  font-family: 'IBM Plex Sans', sans-serif;
+  --app-font: 'Segoe UI', Arial, Helvetica, sans-serif;
+  font-family: var(--app-font);
   line-height: 1.5;
+  color: #050505;
 }
 
 html {
@@ -16,6 +18,7 @@ html {
   box-sizing: inherit;
   margin: 0;
   padding: 0;
+  font-family: var(--app-font);
 }
 
 html,
@@ -26,9 +29,19 @@ body,
 }
 
 body {
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: var(--app-font);
+  background: #f0f2f5;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+.MuiTypography-root,
+.MuiButton-root,
+.MuiInputBase-root,
+.MuiMenuItem-root,
+.MuiListItemText-primary,
+.MuiListItemText-secondary {
+  font-family: var(--app-font) !important;
 }
 
 img,
@@ -45,6 +58,10 @@ button,
 textarea,
 select {
   font: inherit;
+}
+
+button {
+  font-family: var(--app-font);
 }
 
 ul,

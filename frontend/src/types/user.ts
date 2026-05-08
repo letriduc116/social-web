@@ -48,3 +48,14 @@ export interface UserProfileResponse {
 }
 
 export type ProfileTabKey = 'posts' | 'about' | 'followers' | 'following';
+
+export interface UserSearchResult {
+  id: string;
+  userName?: string;
+  fullName?: string;
+  profileImage?: string;
+  isFollowing?: boolean;
+  isFriend?: boolean;
+  hasStory?: boolean;
+  stories?: unknown[];
+}

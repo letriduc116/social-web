@@ -34,6 +34,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.PageRequest;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -316,19 +317,34 @@ public class UserService {
         return mapper.toUserProfileResponse(user, isFollowing, followersCount, followingCount, posts);
     }
 
-    public List<UserSearchResponse> searchUsers(String name) {
-        List<User> users = userRepository.searchChatUsers(name);
-        String currentUserId =  getIdByEmail(JwtUtil.getCurrentUserEmail());
+    public List<UserSearchResponse> searchUsers(String name, String currentUserId, int limit) {
+        String keyword = name == null ? "" : name.trim();
+
+        if (keyword.isBlank()) {
+            return List.of();
+        }
+
+        int safeLimit = Math.min(Math.max(limit, 1), 20);
+
+        List<User> users = userRepository.searchUsers(
+                keyword,
+                currentUserId,
+                PageRequest.of(0, safeLimit)
+        );
 
         return users.stream()
-                .filter(user -> !user.getId().equals(currentUserId))
                 .map(user -> {
                     List<StoryResponse> stories = storyService.getMyStories(user.getId());
+
+                    boolean isFollowing = followRepository
+                            .countByUserIdAndFollowerId(user.getId(), currentUserId) > 0;
+
                     return UserSearchResponse.builder()
                             .id(user.getId())
                             .userName(user.getUserName())
                             .fullName(user.getFullName())
                             .profileImage(user.getProfileImage())
+                            .isFollowing(isFollowing)
                             .hasStory(!stories.isEmpty())
                             .stories(stories)
                             .build();

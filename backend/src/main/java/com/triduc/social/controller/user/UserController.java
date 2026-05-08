@@ -191,14 +191,32 @@ public class UserController {
         ));
     }
 
-    @GetMapping("search")
-    public ResponseEntity<ApiResponse> searchUsers(@RequestParam("name") String name){
-        List<UserSearchResponse> userResponses = userService.searchUsers(name);
-        if(userResponses.isEmpty()){
-            return ResponseEntity.ok(ApiResponse.error(HttpStatus.NOT_FOUND.value(), "Không tìm thấy user"));
-        }else {
-            return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), null, userResponses));
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<UserSearchResponse>>> searchUsers(
+            @RequestParam(value = "name", required = false, defaultValue = "") String name,
+            @RequestParam(value = "limit", required = false, defaultValue = "8") int limit,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        if (jwt == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(
+                            HttpStatus.UNAUTHORIZED.value(),
+                            "Không tìm thấy thông tin xác thực"
+                    ));
         }
+
+        String currentUserId = userService.getIdByEmail(jwt.getSubject());
+
+        List<UserSearchResponse> userResponses =
+                userService.searchUsers(name, currentUserId, limit);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        HttpStatus.OK.value(),
+                        userResponses.isEmpty() ? "Không tìm thấy người dùng phù hợp" : null,
+                        userResponses
+                )
+        );
     }
 
     // THÊM VÀO UserController.java

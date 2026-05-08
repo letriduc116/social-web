@@ -34,6 +34,8 @@ export interface AuthUser {
   email: string;
   userName: string;
   fullName: string;
+  profileImage?: string;
+  coverImage?: string;
   role: string;
 }
 
@@ -42,6 +44,8 @@ export interface AuthResponse {
   email?: string;
   userName?: string;
   fullName?: string;
+  profileImage?: string;
+  coverImage?: string;
   role?: string;
   accessToken?: string;
   refreshToken?: string;

@@ -1,5 +1,6 @@
 package com.triduc.social.dto.response.user;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.triduc.social.dto.response.story.StoryResponse;
 import lombok.*;
 
@@ -15,6 +16,10 @@ public class UserSearchResponse {
     private String userName;
     private String fullName;
     private String profileImage;
-    private boolean hasStory; 
+
+    @JsonProperty("isFollowing")
+    private boolean isFollowing;
+
+    private boolean hasStory;
     private List<StoryResponse> stories;
 }

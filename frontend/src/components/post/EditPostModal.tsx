@@ -52,7 +52,10 @@ function EditPostModal({ open, post, saving, onClose, onSubmit }: EditPostModalP
 
   const dirty = useMemo(() => {
     if (!post) return false;
-    return content.trim() !== (post.content || '').trim() || PRIVACY_OPTIONS[privacy].visibility !== (post.visibility || 'EVERYONE');
+    return (
+      content.trim() !== (post.content || '').trim() ||
+      PRIVACY_OPTIONS[privacy].visibility !== (post.visibility || 'EVERYONE')
+    );
   }, [content, post, privacy]);
 
   if (!post) return null;
@@ -72,7 +75,13 @@ function EditPostModal({ open, post, saving, onClose, onSubmit }: EditPostModalP
   };
 
   return (
-    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
+    <Dialog
+      open={open}
+      onClose={saving ? undefined : onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{ sx: { borderRadius: '16px' } }}
+    >
       <Box sx={{ position: 'relative', px: 2.5, py: 1.7, textAlign: 'center' }}>
         <Typography sx={{ fontSize: 22, fontWeight: 900 }}>Chỉnh sửa bài viết</Typography>
         <IconButton
@@ -118,7 +127,9 @@ function EditPostModal({ open, post, saving, onClose, onSubmit }: EditPostModalP
                   <PublicOutlinedIcon fontSize="small" />
                   <Box>
                     <Typography fontWeight={800}>Mọi người</Typography>
-                    <Typography variant="body2" color="text.secondary">Ai cũng có thể xem</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Ai cũng có thể xem
+                    </Typography>
                   </Box>
                 </Box>
               </MenuItem>
@@ -127,7 +138,9 @@ function EditPostModal({ open, post, saving, onClose, onSubmit }: EditPostModalP
                   <PeopleAltOutlinedIcon fontSize="small" />
                   <Box>
                     <Typography fontWeight={800}>Bạn bè</Typography>
-                    <Typography variant="body2" color="text.secondary">Chỉ bạn bè có thể xem</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Chỉ bạn bè có thể xem
+                    </Typography>
                   </Box>
                 </Box>
               </MenuItem>
@@ -136,7 +149,9 @@ function EditPostModal({ open, post, saving, onClose, onSubmit }: EditPostModalP
                   <LockOutlinedIcon fontSize="small" />
                   <Box>
                     <Typography fontWeight={800}>Chỉ mình tôi</Typography>
-                    <Typography variant="body2" color="text.secondary">Chỉ bạn có thể xem</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Chỉ bạn có thể xem
+                    </Typography>
                   </Box>
                 </Box>
               </MenuItem>

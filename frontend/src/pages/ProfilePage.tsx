@@ -17,8 +17,9 @@ import ProfileStats from '../components/profile/ProfileStats';
 import ProfileTabs from '../components/profile/ProfileTabs';
 import ProfileTimelineHeader from '../components/profile/ProfileTimelineHeader';
 import ProfileUserListCard from '../components/profile/ProfileUserListCard';
+import SharePostModal from '../components/post/SharePostModal';
 
-import type { CreatePostModalPayload, PostItem } from '../types/post';
+import type { CreatePostModalPayload, PostItem, SharePostModalPayload } from '../types/post';
 import type { ProfileTabKey, UserProfileResponse } from '../types/user';
 import { authStorage } from '../services/authStorage';
 import { postService } from '../services/postService';
@@ -58,10 +59,16 @@ function ProfilePage() {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [openPostDetail, setOpenPostDetail] = useState(false);
   const [openCreatePost, setOpenCreatePost] = useState(false);
+
+  const [openSharePost, setOpenSharePost] = useState(false);
+  const [sharingPost, setSharingPost] = useState<PostItem | null>(null);
+  const [sharingSubmitting, setSharingSubmitting] = useState(false);
+
   const [openEditProfile, setOpenEditProfile] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
+  const [friendRequestSent, setFriendRequestSent] = useState(false);
 
   const currentUserId = authStorage.getCurrentUserId();
   const currentUserName = authStorage.getCurrentUserName();
@@ -70,6 +77,45 @@ function ProfilePage() {
   const targetUserId = routeUserId || currentUserId;
   const isOwner = targetUserId === currentUserId;
   const selectedPost = posts.find((item) => item.id === selectedPostId) || null;
+
+  const handleOpenSharePost = (post: PostItem) => {
+    setSharingPost(post.sharedPost || post);
+    setOpenSharePost(true);
+  };
+
+  const handleShareClick = (event: MouseEvent, post: PostItem) => {
+    event.stopPropagation();
+    handleOpenSharePost(post);
+  };
+
+  const handleCloseSharePost = () => {
+    if (sharingSubmitting) return;
+
+    setOpenSharePost(false);
+    setSharingPost(null);
+  };
+
+  const handleSharePost = async (payload: SharePostModalPayload) => {
+    if (!sharingPost) return;
+
+    try {
+      setSharingSubmitting(true);
+
+      await postService.sharePost(sharingPost, payload);
+
+      setOpenSharePost(false);
+      setSharingPost(null);
+      setToast('Đã chia sẻ bài viết');
+
+      await reloadPostsOnly();
+    } catch (err) {
+      console.error(err);
+      setToast(getErrorMessage(err, 'Chia sẻ bài viết thất bại'));
+      throw err;
+    } finally {
+      setSharingSubmitting(false);
+    }
+  };
 
   const fetchProfileData = async () => {
     try {
@@ -101,6 +147,7 @@ function ProfilePage() {
 
   useEffect(() => {
     setActiveTab('posts');
+    setFriendRequestSent(false);
     fetchProfileData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetUserId]);
@@ -301,7 +348,9 @@ function ProfilePage() {
     }
 
     if (activeTab === 'about') {
-      return <ProfileAboutCard profile={profileData} isOwner={isOwner} onEditProfile={() => setOpenEditProfile(true)} />;
+      return (
+        <ProfileAboutCard profile={profileData} isOwner={isOwner} onEditProfile={() => setOpenEditProfile(true)} />
+      );
     }
 
     return (
@@ -319,6 +368,7 @@ function ProfilePage() {
               onOpenDetail={handleOpenPostDetail}
               onCommentClick={handleCommentClick}
               onToggleLike={handleToggleLikePost}
+              onShareClick={handleShareClick}
               onPostUpdated={updatePostInList}
               onPostDeleted={removePostFromList}
             />
@@ -346,6 +396,7 @@ function ProfilePage() {
               <ProfileActions
                 isOwner={isOwner}
                 isFollowing={profileData.isFollowing}
+                friendRequestSent={friendRequestSent}
                 loading={followLoading}
                 onFollowToggle={handleFollowToggle}
                 onEditProfile={() => setOpenEditProfile(true)}
@@ -385,6 +436,15 @@ function ProfilePage() {
         userAvatarText={currentUserAvatarText}
       />
 
+      <SharePostModal
+        open={openSharePost}
+        onClose={handleCloseSharePost}
+        post={sharingPost}
+        onSubmit={handleSharePost}
+        userName={currentUserName}
+        userAvatarText={currentUserAvatarText}
+      />
+
       <ProfileEditModal
         open={openEditProfile}
         profile={profileData}
@@ -404,6 +464,10 @@ function ProfilePage() {
           if (selectedPostId) {
             increaseCommentCount(selectedPostId, 1);
           }
+        }}
+        onShareClick={(post) => {
+          setOpenPostDetail(false);
+          handleOpenSharePost(post);
         }}
       />
 

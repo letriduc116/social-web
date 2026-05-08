@@ -1,5 +1,5 @@
 import { ApiService } from './api';
-import type { UserProfileResponse, UserSummary } from '../types/user';
+import type { UserProfileResponse, UserSearchResult, UserSummary } from '../types/user';
 
 type ApiWrap<T> = {
   status?: number;
@@ -85,6 +85,22 @@ const uploadCoverImage = async (id: string, file: File): Promise<string> => {
   return unwrap(response);
 };
 
+const searchUsers = async (name: string, limit = 20): Promise<UserSearchResult[]> => {
+  const keyword = name.trim();
+
+  if (!keyword) {
+    return [];
+  }
+
+  const response = await ApiService.get<ApiWrap<UserSearchResult[]> | UserSearchResult[]>(`${API_URL}/search`, {
+    name: keyword,
+    limit,
+  });
+
+  const data = unwrap(response);
+  return Array.isArray(data) ? data : [];
+};
+
 export const userService = {
   getProfile,
   getFollowers,
@@ -94,4 +110,5 @@ export const userService = {
   updateProfile,
   uploadProfileImage,
   uploadCoverImage,
+  searchUsers,
 };

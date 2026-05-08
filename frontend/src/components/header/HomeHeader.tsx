@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { AppBar, Toolbar, Box, IconButton, InputBase, Tooltip } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+import { AppBar, Toolbar, Box, IconButton, Tooltip, Avatar } from '@mui/material';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
@@ -9,12 +8,16 @@ import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneR
 import MessengerOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
-import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 
 import MenuDropdown from './menus/MenuDropdown';
 import MessengerMenu from './menus/MessengerMenu';
 import NotificationMenu from './menus/NotificationMenu';
 import AccountMenu from './menus/AccountMenu';
+import HeaderUserSearch from './search/HeaderUserSearch';
+
+import { authStorage } from '../../services/authStorage';
+import { userService } from '../../services/userService';
+
 import '../../styles/header.css';
 import '../../styles/menus.css';
 
@@ -28,9 +31,45 @@ const navItems = [
 
 type MenuKey = 'menu' | 'messages' | 'notifications' | 'account' | null;
 
+type HeaderUser = {
+  fullName: string;
+  profileImage: string;
+};
+
 function HomeHeader() {
   const [openMenu, setOpenMenu] = useState<MenuKey>(null);
+  const [headerUser, setHeaderUser] = useState<HeaderUser>({
+    fullName: authStorage.getCurrentUserName(),
+    profileImage: authStorage.getCurrentProfileImage(),
+  });
+
   const headerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function syncCurrentUser() {
+      try {
+        const currentUserId = authStorage.getCurrentUserId();
+        const profile = await userService.getProfile(currentUserId);
+
+        if (!mounted) return;
+
+        setHeaderUser({
+          fullName: profile.fullName || profile.userName || authStorage.getCurrentUserName(),
+          profileImage: profile.avatarUrl || authStorage.getCurrentProfileImage(),
+        });
+      } catch (error) {
+        console.error('Không đồng bộ được user trên header:', error);
+      }
+    }
+
+    syncCurrentUser();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -47,6 +86,12 @@ function HomeHeader() {
     setOpenMenu((prev) => (prev === menu ? null : menu));
   };
 
+  const closeMenu = () => {
+    setOpenMenu(null);
+  };
+
+  const avatarText = (headerUser.fullName || 'U').charAt(0).toUpperCase();
+
   return (
     <AppBar position="sticky" color="inherit" elevation={1} className="fb-header-appbar">
       <Toolbar className="fb-header-toolbar" ref={headerRef}>
@@ -58,10 +103,7 @@ function HomeHeader() {
             <span className="fb-brand-title">Ducky</span>
           </Box>
 
-          <Box className="fb-search-box">
-            <SearchIcon fontSize="small" />
-            <InputBase placeholder="Tìm kiếm trên Ducky" fullWidth />
-          </Box>
+          <HeaderUserSearch />
         </Box>
 
         <Box className="fb-header-center">
@@ -110,9 +152,22 @@ function HomeHeader() {
               className={`fb-action-btn ${openMenu === 'account' ? 'active' : ''}`}
               onClick={() => toggleMenu('account')}
             >
-              <AccountCircleOutlinedIcon />
+              <Avatar
+                src={headerUser.profileImage || undefined}
+                sx={{ width: 34, height: 34, bgcolor: '#90a4ae', fontSize: 15, fontWeight: 700 }}
+              >
+                {avatarText}
+              </Avatar>
             </IconButton>
-            {openMenu === 'account' && <AccountMenu />}
+
+            {openMenu === 'account' && (
+              <AccountMenu
+                fullName={headerUser.fullName}
+                profileImage={headerUser.profileImage}
+                avatarText={avatarText}
+                onClose={closeMenu}
+              />
+            )}
           </Box>
         </Box>
       </Toolbar>
