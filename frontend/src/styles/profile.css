@@ -234,7 +234,9 @@
   max-width: calc(100vw - 32px);
   border-radius: 12px !important;
   padding: 8px !important;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.2),
+    0 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
 .profile-actions-menu-item {
@@ -865,4 +867,64 @@
 
 .profile-cover-button input[type='file'] {
   display: none;
+}
+
+.profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-primary-btn,
+.profile-secondary-btn,
+.profile-message-btn {
+  min-height: 40px;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+  padding: 0 14px !important;
+}
+
+.profile-primary-btn {
+  background: #1b74e4 !important;
+  color: #ffffff !important;
+}
+
+.profile-primary-btn:hover {
+  background: #166fe5 !important;
+}
+
+.profile-message-btn {
+  background: #1b74e4 !important;
+  color: #ffffff !important;
+}
+
+.profile-message-btn:hover {
+  background: #166fe5 !important;
+}
+
+.profile-secondary-btn {
+  background: #e4e6eb !important;
+  color: #050505 !important;
+}
+
+.profile-secondary-btn:hover {
+  background: #d8dadf !important;
+}
+
+.profile-more-btn {
+  min-width: 44px !important;
+  height: 40px !important;
+  border-radius: 8px !important;
+  background: #e4e6eb !important;
+  color: #050505 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.profile-more-btn:hover {
+  background: #d8dadf !important;
 }

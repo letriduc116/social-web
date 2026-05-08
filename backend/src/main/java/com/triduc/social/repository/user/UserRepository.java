@@ -33,8 +33,31 @@ public interface UserRepository extends JpaRepository<User, String> {
 //""")
 //    List<User> findByUsernameContainingIgnoreCase(String keyword, int limit);
 
-    @Query("SELECT u FROM User u WHERE u.userName LIKE %:keyWord% OR u.fullName LIKE %:keyWord%")
-    public List<User> searchChatUsers(@Param("keyWord") String keyword);
+//    @Query("SELECT u FROM User u WHERE u.userName LIKE %:keyWord% OR u.fullName LIKE %:keyWord%")
+//    public List<User> searchChatUsers(@Param("keyWord") String keyword);
+
+    @Query("""
+    SELECT u FROM User u
+    WHERE u.id <> :currentUserId
+      AND (
+        LOWER(u.userName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+      )
+    ORDER BY
+      CASE
+        WHEN LOWER(u.fullName) = LOWER(:keyword) THEN 0
+        WHEN LOWER(u.userName) = LOWER(:keyword) THEN 1
+        WHEN LOWER(u.fullName) LIKE LOWER(CONCAT(:keyword, '%')) THEN 2
+        WHEN LOWER(u.userName) LIKE LOWER(CONCAT(:keyword, '%')) THEN 3
+        ELSE 4
+      END,
+      u.fullName ASC
+    """)
+    List<User> searchUsers(
+            @Param("keyword") String keyword,
+            @Param("currentUserId") String currentUserId,
+            Pageable pageable
+    );
 
 
 

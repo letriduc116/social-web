@@ -118,7 +118,9 @@ function Homepage() {
 
     try {
       setSharingSubmitting(true);
-      await postService.sharePost(sharingPost.id, payload);
+
+      await postService.sharePost(sharingPost, payload);
+
       setOpenSharePost(false);
       setSharingPost(null);
       navigate('/profile');

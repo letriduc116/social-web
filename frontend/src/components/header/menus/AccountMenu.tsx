@@ -16,17 +16,40 @@ import FeedbackOutlinedIcon from '@mui/icons-material/FeedbackOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import ChevronRightOutlinedIcon from '@mui/icons-material/ChevronRightOutlined';
 import { useNavigate } from 'react-router-dom';
-import HeaderMenu from './HeaderMenu';
 
-function AccountMenu() {
+import HeaderMenu from './HeaderMenu';
+import { ApiService } from '../../../services/api';
+
+type AccountMenuProps = {
+  fullName?: string;
+  profileImage?: string;
+  avatarText?: string;
+  onClose?: () => void;
+};
+
+function AccountMenu({ fullName = 'Người dùng', profileImage = '', avatarText = 'U', onClose }: AccountMenuProps) {
   const navigate = useNavigate();
+
+  const handleOpenProfile = () => {
+    onClose?.();
+    navigate('/profile');
+  };
+
+  const handleLogout = () => {
+    ApiService.clearTokens();
+    onClose?.();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <HeaderMenu className="fb-account-menu">
-      <Paper elevation={2} className="fb-account-card" sx={{ cursor: 'pointer' }} onClick={() => navigate('/profile')}>
-        <Avatar sx={{ width: 48, height: 48, bgcolor: '#90a4ae' }}>T</Avatar>
+      <Paper elevation={2} className="fb-account-card" sx={{ cursor: 'pointer' }} onClick={handleOpenProfile}>
+        <Avatar src={profileImage || undefined} sx={{ width: 48, height: 48, bgcolor: '#90a4ae' }}>
+          {avatarText}
+        </Avatar>
+
         <Box>
-          <Typography fontWeight={700}>Trí Đức</Typography>
+          <Typography fontWeight={700}>{fullName}</Typography>
           <Typography variant="body2" color="text.secondary">
             Xem tất cả trang cá nhân
           </Typography>
@@ -67,7 +90,7 @@ function AccountMenu() {
           <ListItemText primary="Đóng góp ý kiến" />
         </ListItemButton>
 
-        <ListItemButton>
+        <ListItemButton onClick={handleLogout}>
           <ListItemIcon>
             <LogoutOutlinedIcon />
           </ListItemIcon>

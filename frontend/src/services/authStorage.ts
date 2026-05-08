@@ -26,11 +26,26 @@ const getCurrentUserId = (): string => {
 
 const getCurrentUserName = (): string => {
   const auth = getStoredAuth();
+
   return auth?.fullName || auth?.user?.fullName || auth?.userName || auth?.user?.userName || 'Người dùng';
+};
+
+const getCurrentProfileImage = (): string => {
+  const auth = getStoredAuth();
+
+  return auth?.profileImage || auth?.user?.profileImage || '';
+};
+
+const clearAuth = (): void => {
+  localStorage.removeItem(USER_STORAGE_KEY);
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
 };
 
 export const authStorage = {
   getStoredAuth,
   getCurrentUserId,
   getCurrentUserName,
+  getCurrentProfileImage,
+  clearAuth,
 };

@@ -148,23 +148,53 @@ const deletePost = async (postId: string): Promise<void> => {
 };
 
 const updatePost = async (postId: string, payload: UpdatePostPayload): Promise<PostItem> => {
-  const response = await ApiService.put<ApiResponse<PostItem> | PostItem, UpdatePostPayload>(`${API_URL}/update`, payload, {
-    params: { postId },
-  });
+  const response = await ApiService.put<ApiResponse<PostItem> | PostItem, UpdatePostPayload>(
+    `${API_URL}/update`,
+    payload,
+    {
+      params: { postId },
+    },
+  );
 
   return unwrap(response);
 };
 
-const sharePost = async (post: PostItem, payload: SharePostModalPayload): Promise<PostItem> => {
+const getOriginalPostIdForShare = (postOrId: PostItem | string): string => {
+  if (typeof postOrId === 'string') {
+    return postOrId;
+  }
+
+  return postOrId.sharedPost?.id || postOrId.id;
+};
+
+const sharePost = async (postOrId: PostItem | string, payload: SharePostModalPayload): Promise<PostItem> => {
+  const originalPostId = getOriginalPostIdForShare(postOrId);
+
+  if (!originalPostId) {
+    throw new Error('Thiếu originalPostId bài viết gốc');
+  }
+
   const body: SharePostPayload = {
     userId: authStorage.getCurrentUserId(),
-    originalPostId: post.sharedPost?.id || post.id,
+    originalPostId,
     content: payload.content,
     visibility: privacyToVisibility(payload.privacy),
   };
 
   const response = await ApiService.post<ApiResponse<PostItem> | PostItem, SharePostPayload>(`${API_URL}/share`, body);
+
   return unwrap(response);
+};
+
+const reportPost = async (postId: string, reasonId: string): Promise<void> => {
+  console.log('Report post UI only:', { postId, reasonId });
+
+  // Sau này nếu có BE report thật thì đổi thành:
+  // await ApiService.post('/v1/post/report', {
+  //   postId,
+  //   reasonId,
+  //   userId: authStorage.getCurrentUserId(),
+  // });
 };
 
 export const postService = {
@@ -181,5 +211,6 @@ export const postService = {
   deletePost,
   updatePost,
   sharePost,
+  reportPost,
   privacyToVisibility,
 };
