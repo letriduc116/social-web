@@ -1,0 +1,46 @@
+/* Confirm dialog thay cho window.confirm khi hủy kết bạn */
+.profile-confirm-dialog {
+  border-radius: 16px !important;
+  overflow: hidden;
+}
+
+.profile-confirm-title {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  color: #050505;
+  padding: 20px 22px 8px !important;
+}
+
+.profile-confirm-desc {
+  color: #65676b;
+  font-size: 15px !important;
+  line-height: 1.45 !important;
+}
+
+.profile-confirm-actions {
+  padding: 12px 20px 20px !important;
+  gap: 8px;
+}
+
+.profile-danger-btn {
+  min-height: 40px;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 800 !important;
+  background: #e41e3f !important;
+  color: #ffffff !important;
+  padding: 0 16px !important;
+}
+
+.profile-danger-btn:hover {
+  background: #c91534 !important;
+}
+
+.profile-actions-danger-item:hover {
+  background: #fff1f3 !important;
+}
+
+.profile-actions-danger-item svg,
+.profile-actions-danger-item .profile-menu-title {
+  color: #e41e3f !important;
+}

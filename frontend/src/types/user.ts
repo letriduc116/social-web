@@ -1,4 +1,5 @@
 import type { PostVisibility } from './post';
+import type { FriendshipStatus } from './friend';
 
 export interface UserSummary {
   id: string;
@@ -58,4 +59,7 @@ export interface UserSearchResult {
   isFriend?: boolean;
   hasStory?: boolean;
   stories?: unknown[];
+
+  friendshipStatus?: FriendshipStatus;
+  requestId?: string;
 }
