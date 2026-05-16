@@ -21,9 +21,11 @@ import SharePostModal from '../components/post/SharePostModal';
 
 import type { CreatePostModalPayload, PostItem, SharePostModalPayload } from '../types/post';
 import type { ProfileTabKey, UserProfileResponse } from '../types/user';
+import type { FriendshipStatus, FriendshipStatusResponse } from '../types/friend';
 import { authStorage } from '../services/authStorage';
 import { postService } from '../services/postService';
 import { userService } from '../services/userService';
+import { friendService } from '../services/friendService';
 import '../styles/profile.css';
 
 const createEmptyProfile = (): UserProfileResponse => ({
@@ -68,7 +70,8 @@ function ProfilePage() {
   const [followLoading, setFollowLoading] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
-  const [friendRequestSent, setFriendRequestSent] = useState(false);
+  const [friendshipStatus, setFriendshipStatus] = useState<FriendshipStatus>('NONE');
+  const [friendRequestId, setFriendRequestId] = useState<string | undefined>();
 
   const currentUserId = authStorage.getCurrentUserId();
   const currentUserName = authStorage.getCurrentUserName();
@@ -122,21 +125,32 @@ function ProfilePage() {
       setLoading(true);
       setError('');
 
-      const [profileRes, followersRes, followingRes, userPosts] = await Promise.all([
+      const [profileRes, followersRes, followingRes, userPosts, friendshipStatusRes] = await Promise.all([
         userService.getProfile(targetUserId),
         userService.getFollowers(targetUserId),
         userService.getFollowing(targetUserId),
         postService.getPostsByUserId(targetUserId),
+        targetUserId === currentUserId
+          ? Promise.resolve({
+              targetUserId,
+              status: 'SELF' as FriendshipStatus,
+              requestId: undefined,
+              following: false,
+            } satisfies FriendshipStatusResponse)
+          : friendService.getFriendshipStatus(targetUserId),
       ]);
 
       setPosts(userPosts || []);
       setProfile({
         ...profileRes,
+        isFollowing: isOwner ? profileRes.isFollowing : Boolean(friendshipStatusRes.following),
         followers: followersRes || [],
         followings: followingRes || [],
         postCount: userPosts?.length || 0,
         posts: [],
       });
+      setFriendshipStatus(friendshipStatusRes.status);
+      setFriendRequestId(friendshipStatusRes.requestId);
     } catch (err) {
       console.error(err);
       setError(getErrorMessage(err, 'Không thể tải trang cá nhân'));
@@ -147,7 +161,8 @@ function ProfilePage() {
 
   useEffect(() => {
     setActiveTab('posts');
-    setFriendRequestSent(false);
+    setFriendshipStatus('NONE');
+    setFriendRequestId(undefined);
     fetchProfileData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetUserId]);
@@ -281,30 +296,117 @@ function ProfilePage() {
     }
   };
 
-  const handleFollowToggle = async () => {
+  const handleFriendAction = async () => {
     if (isOwner || followLoading) return;
-
-    const wasFollowing = profileData.isFollowing;
 
     try {
       setFollowLoading(true);
 
-      if (wasFollowing) {
-        await userService.unfollowUser(currentUserId, targetUserId);
-      } else {
-        await userService.followUser(currentUserId, targetUserId);
+      if (friendshipStatus === 'NONE') {
+        const request = await friendService.sendRequest(targetUserId);
+        setFriendshipStatus('PENDING_SENT');
+        setFriendRequestId(request.id);
+        setToast('Đã gửi lời mời kết bạn');
+        return;
       }
 
-      setProfile((prev) => ({
-        ...prev,
-        isFollowing: !wasFollowing,
-        followersCount: wasFollowing ? Math.max(0, prev.followersCount - 1) : prev.followersCount + 1,
-      }));
+      if (friendshipStatus === 'PENDING_SENT') {
+        if (!friendRequestId) {
+          setToast('Không tìm thấy lời mời để hủy');
+          return;
+        }
 
-      setToast(wasFollowing ? 'Đã bỏ theo dõi' : 'Đã theo dõi');
+        await friendService.cancelRequest(friendRequestId);
+        setFriendshipStatus('NONE');
+        setFriendRequestId(undefined);
+        setToast('Đã hủy lời mời kết bạn');
+        return;
+      }
+
+      if (friendshipStatus === 'PENDING_RECEIVED') {
+        if (!friendRequestId) {
+          setToast('Không tìm thấy lời mời để chấp nhận');
+          return;
+        }
+
+        const response = await friendService.acceptRequest(friendRequestId);
+        setFriendshipStatus('FRIEND');
+        setFriendRequestId(response.id);
+        setProfile((prev) => ({
+          ...prev,
+          isFollowing: true,
+          followersCount: prev.followersCount + 1,
+          followingCount: prev.followingCount + 1,
+        }));
+        setToast('Đã chấp nhận lời mời kết bạn');
+        return;
+      }
     } catch (err) {
       console.error(err);
-      setToast(getErrorMessage(err, 'Không thể cập nhật theo dõi'));
+      setToast(getErrorMessage(err, 'Không thể cập nhật trạng thái kết bạn'));
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const handleUnfollowFriend = async () => {
+    if (isOwner || followLoading || friendshipStatus !== 'FRIEND') return;
+
+    try {
+      setFollowLoading(true);
+      await friendService.unfollowFriend(targetUserId);
+      setProfile((prev) => ({
+        ...prev,
+        isFollowing: false,
+        followersCount: prev.isFollowing ? Math.max(0, prev.followersCount - 1) : prev.followersCount,
+      }));
+      setToast('Đã bỏ theo dõi');
+    } catch (err) {
+      console.error(err);
+      setToast(getErrorMessage(err, 'Không thể bỏ theo dõi'));
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const handleFollowFriendAgain = async () => {
+    if (isOwner || followLoading || friendshipStatus !== 'FRIEND') return;
+
+    try {
+      setFollowLoading(true);
+      await friendService.followFriendAgain(targetUserId);
+      setProfile((prev) => ({
+        ...prev,
+        isFollowing: true,
+        followersCount: prev.isFollowing ? prev.followersCount : prev.followersCount + 1,
+      }));
+      setToast('Đã theo dõi lại');
+    } catch (err) {
+      console.error(err);
+      setToast(getErrorMessage(err, 'Không thể theo dõi lại'));
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const handleUnfriend = async () => {
+    if (isOwner || followLoading || friendshipStatus !== 'FRIEND') return;
+
+    try {
+      setFollowLoading(true);
+      await friendService.unfriend(targetUserId);
+      setFriendshipStatus('NONE');
+      setFriendRequestId(undefined);
+      setProfile((prev) => ({
+        ...prev,
+        isFollowing: false,
+        followersCount: prev.isFollowing ? Math.max(0, prev.followersCount - 1) : prev.followersCount,
+        followingCount: Math.max(0, prev.followingCount - 1),
+      }));
+      setToast('Đã hủy kết bạn');
+    } catch (err) {
+      console.error(err);
+      setToast(getErrorMessage(err, 'Không thể hủy kết bạn'));
     } finally {
       setFollowLoading(false);
     }
@@ -395,10 +497,13 @@ function ProfilePage() {
             >
               <ProfileActions
                 isOwner={isOwner}
+                friendshipStatus={friendshipStatus}
                 isFollowing={profileData.isFollowing}
-                friendRequestSent={friendRequestSent}
                 loading={followLoading}
-                onFollowToggle={handleFollowToggle}
+                onFriendAction={handleFriendAction}
+                onUnfollowFriend={handleUnfollowFriend}
+                onFollowFriendAgain={handleFollowFriendAgain}
+                onUnfriend={handleUnfriend}
                 onEditProfile={() => setOpenEditProfile(true)}
                 onMessage={handleMessage}
               />

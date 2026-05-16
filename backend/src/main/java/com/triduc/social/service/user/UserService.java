@@ -20,6 +20,8 @@ import com.triduc.social.repository.user.UserRepository;
 import com.triduc.social.service.FileService;
 import com.triduc.social.service.jwt.JwtService;
 import com.triduc.social.service.story.StoryService;
+import com.triduc.social.enums.FriendRequestStatus;
+import com.triduc.social.repository.friend.FriendRequestRepository;
 import com.triduc.social.utils.JwtUtil;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.Cookie;
@@ -52,6 +54,7 @@ public class UserService {
     private final OtpService otpService;
     private final PostRepository postRepository;
     private final FollowRepository followRepository;
+    private final FriendRequestRepository friendRequestRepository;
     private final FileService fileService;
     private final StoryService storyService;
 
@@ -396,8 +399,9 @@ public class UserService {
     }
 
     private boolean isFriend(String userAId, String userBId) {
-        return followRepository.countByUserIdAndFollowerId(userAId, userBId) > 0
-                && followRepository.countByUserIdAndFollowerId(userBId, userAId) > 0;
+        return !friendRequestRepository
+                .findBetweenUsersByStatus(userAId, userBId, FriendRequestStatus.ACCEPTED)
+                .isEmpty();
     }
 
     @Transactional

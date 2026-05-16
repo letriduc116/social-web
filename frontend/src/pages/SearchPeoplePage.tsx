@@ -6,6 +6,7 @@ import HomeHeader from '../components/header/HomeHeader';
 import SearchFilterSidebar from '../components/search/SearchFilterSidebar';
 import SearchUserCard from '../components/search/SearchUserCard';
 import { userService } from '../services/userService';
+import { friendService } from '../services/friendService';
 import type { UserSearchResult } from '../types/user';
 import '../styles/search.css';
 
@@ -22,6 +23,7 @@ function SearchPeoplePage() {
 
   const [users, setUsers] = useState<UserSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [actionLoadingUserId, setActionLoadingUserId] = useState('');
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
 
@@ -42,9 +44,26 @@ function SearchPeoplePage() {
 
         const data = await userService.searchUsers(keyword, 30);
 
+        const dataWithStatus = await Promise.all(
+          (data || []).map(async (user) => {
+            try {
+              const status = await friendService.getFriendshipStatus(user.id);
+
+              return {
+                ...user,
+                friendshipStatus: status.status,
+                requestId: status.requestId,
+                isFriend: status.status === 'FRIEND',
+              };
+            } catch {
+              return user;
+            }
+          }),
+        );
+
         if (!mounted) return;
 
-        setUsers(data || []);
+        setUsers(dataWithStatus);
       } catch (err) {
         console.error(err);
 
@@ -66,9 +85,67 @@ function SearchPeoplePage() {
     };
   }, [keyword]);
 
-  const handleAddFriend = (user: UserSearchResult) => {
+  const handleAddFriend = async (user: UserSearchResult) => {
     const displayName = user.fullName || user.userName || 'người dùng này';
-    setToast(`Tính năng gửi lời mời kết bạn tới ${displayName} sẽ được hiện thực sau.`);
+
+    try {
+      setActionLoadingUserId(user.id);
+
+      const request = await friendService.sendRequest(user.id);
+
+      setUsers((prev) =>
+        prev.map((item) =>
+          item.id === user.id
+            ? {
+                ...item,
+                friendshipStatus: 'PENDING_SENT',
+                requestId: request.id,
+              }
+            : item,
+        ),
+      );
+
+      setToast(`Đã gửi lời mời kết bạn tới ${displayName}`);
+    } catch (err) {
+      console.error(err);
+      setToast(getErrorMessage(err, 'Không thể gửi lời mời kết bạn'));
+    } finally {
+      setActionLoadingUserId('');
+    }
+  };
+
+  const handleAcceptFriend = async (user: UserSearchResult) => {
+    if (!user.requestId) {
+      setToast('Không tìm thấy mã lời mời kết bạn');
+      return;
+    }
+
+    const displayName = user.fullName || user.userName || 'người dùng này';
+
+    try {
+      setActionLoadingUserId(user.id);
+
+      await friendService.acceptRequest(user.requestId);
+
+      setUsers((prev) =>
+        prev.map((item) =>
+          item.id === user.id
+            ? {
+                ...item,
+                friendshipStatus: 'FRIEND',
+                isFriend: true,
+              }
+            : item,
+        ),
+      );
+
+      setToast(`Bạn và ${displayName} đã trở thành bạn bè`);
+    } catch (err) {
+      console.error(err);
+      setToast(getErrorMessage(err, 'Không thể chấp nhận lời mời kết bạn'));
+    } finally {
+      setActionLoadingUserId('');
+    }
   };
 
   const handleMessage = (user: UserSearchResult) => {
@@ -118,7 +195,14 @@ function SearchPeoplePage() {
             {!loading && !error && users.length > 0 ? (
               <Box className="search-user-list">
                 {users.map((user) => (
-                  <SearchUserCard key={user.id} user={user} onAddFriend={handleAddFriend} onMessage={handleMessage} />
+                  <SearchUserCard
+                    key={user.id}
+                    user={user}
+                    actionLoading={actionLoadingUserId === user.id}
+                    onAddFriend={handleAddFriend}
+                    onAcceptFriend={handleAcceptFriend}
+                    onMessage={handleMessage}
+                  />
                 ))}
               </Box>
             ) : null}
