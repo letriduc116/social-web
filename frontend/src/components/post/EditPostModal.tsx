@@ -45,6 +45,7 @@ function EditPostModal({ open, post, saving, onClose, onSubmit }: EditPostModalP
 
   useEffect(() => {
     if (open && post) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- modal form state must reset from the selected post when opened.
       setContent(post.content || '');
       setPrivacy(visibilityToPrivacy(post.visibility));
     }

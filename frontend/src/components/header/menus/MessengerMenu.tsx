@@ -1,24 +1,32 @@
 import {
+  Avatar,
   Box,
+  Button,
+  Chip,
+  CircularProgress,
   InputBase,
   List,
-  ListItemButton,
   ListItemAvatar,
-  Avatar,
+  ListItemButton,
   ListItemText,
-  Chip,
-  Button,
 } from '@mui/material';
+import { Link } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import HeaderMenu from './HeaderMenu';
+import { useMiniChat } from '../../../services/miniChatStore';
 
-const messages = [
-  { name: 'Ann Nguyễn', text: 'Ừa Đức biết đi đánh mà · 9 giờ', color: '#d32f2f' },
-  { name: 'NguyễnQ Hiếu', text: 'Hiếu đã gửi một file đính kèm · 10 giờ', color: '#1976d2' },
-  { name: 'Minh Anh', text: 'Bạn đã gửi một nhãn dán · 21 giờ', color: '#388e3c' },
-];
+type MessengerMenuProps = {
+  onClose?: () => void;
+};
 
-function MessengerMenu() {
+function MessengerMenu({ onClose }: MessengerMenuProps) {
+  const { conversations, loadingConversations, openMiniChat } = useMiniChat();
+
+  const handleOpenConversation = (conversationId: string) => {
+    void openMiniChat(conversationId);
+    onClose?.();
+  };
+
   return (
     <HeaderMenu title="Đoạn chat" className="fb-messenger-menu">
       <Box className="fb-menu-search">
@@ -33,17 +41,38 @@ function MessengerMenu() {
       </Box>
 
       <List disablePadding>
-        {messages.map((item) => (
-          <ListItemButton key={item.name} className="fb-message-item">
+        {loadingConversations && conversations.length === 0 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+            <CircularProgress size={22} />
+          </Box>
+        )}
+
+        {!loadingConversations && conversations.length === 0 && (
+          <Box sx={{ px: 2, py: 2, color: 'text.secondary' }}>Chưa có đoạn chat phù hợp.</Box>
+        )}
+
+        {conversations.slice(0, 4).map((conversation) => (
+          <ListItemButton
+            key={conversation.id}
+            className="fb-message-item"
+            onClick={() => handleOpenConversation(conversation.id)}
+          >
             <ListItemAvatar>
-              <Avatar sx={{ bgcolor: item.color }}>{item.name.charAt(0)}</Avatar>
+              <Avatar src={conversation.avatarUrl || undefined} sx={{ bgcolor: conversation.avatarColor }}>
+                {conversation.name.charAt(0)}
+              </Avatar>
             </ListItemAvatar>
-            <ListItemText primary={item.name} secondary={item.text} />
+            <ListItemText
+              primary={conversation.name}
+              secondary={`${conversation.typing ? 'Đang nhập...' : conversation.lastMessage} · ${
+                conversation.lastMessageAt || 'Vừa xong'
+              }`}
+            />
           </ListItemButton>
         ))}
       </List>
 
-      <Button fullWidth className="fb-menu-footer-btn">
+      <Button fullWidth className="fb-menu-footer-btn" component={Link} to="/messages" onClick={onClose}>
         Xem tất cả trong Messenger
       </Button>
     </HeaderMenu>
