@@ -1,0 +1,78 @@
+// import type { ChatConversation } from '../types/chat';
+
+// export const chatConversations: ChatConversation[] = [
+//   {
+//     id: 'ann-nguyen',
+//     name: 'Ann Nguyễn',
+//     avatarColor: '#e53935',
+//     status: 'online',
+//     activeLabel: 'Đang hoạt động',
+//     lastMessage: 'Tối nay cà phê không Đức?',
+//     lastMessageAt: '9 phút',
+//     unreadCount: 2,
+//     pinned: true,
+//     messages: [
+//       { id: 'ann-1', sender: 'them', text: 'Đức ơi, cuối tuần này rảnh không?', time: '18:20' },
+//       { id: 'ann-2', sender: 'me', text: 'Có nè, bạn cần mình giúp gì?', time: '18:21', status: 'seen' },
+//       {
+//         id: 'ann-3',
+//         sender: 'them',
+//         text: 'Mình muốn bàn về landing page mới cho dự án cá nhân.',
+//         time: '18:22',
+//       },
+//       { id: 'ann-4', sender: 'them', text: 'Tối nay cà phê không Đức?', time: '18:25' },
+//     ],
+//   },
+//   {
+//     id: 'hieu-nguyen',
+//     name: 'NguyễnQ Hiếu',
+//     avatarColor: '#1976d2',
+//     status: 'away',
+//     activeLabel: 'Hoạt động 15 phút trước',
+//     lastMessage: 'Hiếu đã gửi một file đính kèm',
+//     lastMessageAt: '42 phút',
+//     unreadCount: 0,
+//     messages: [
+//       { id: 'hieu-1', sender: 'them', text: 'Mình gửi file thiết kế ở đây nhé.', time: '17:02' },
+//       { id: 'hieu-2', sender: 'me', text: 'Ok, để mình xem rồi phản hồi.', time: '17:05', status: 'seen' },
+//       { id: 'hieu-3', sender: 'them', text: 'Hiếu đã gửi một file đính kèm', time: '17:08' },
+//     ],
+//   },
+//   {
+//     id: 'minh-anh',
+//     name: 'Minh Anh',
+//     avatarColor: '#43a047',
+//     status: 'online',
+//     activeLabel: 'Đang hoạt động',
+//     lastMessage: 'Bạn đã gửi một nhãn dán',
+//     lastMessageAt: '1 giờ',
+//     unreadCount: 0,
+//     typing: true,
+//     messages: [
+//       { id: 'minh-1', sender: 'them', text: 'Bài post mới nhìn ổn áp đó.', time: '16:44' },
+//       {
+//         id: 'minh-2',
+//         sender: 'me',
+//         text: 'Cảm ơn nha, mình đang chỉnh thêm phần chat.',
+//         time: '16:45',
+//         status: 'seen',
+//       },
+//       { id: 'minh-3', sender: 'me', text: 'Bạn đã gửi một nhãn dán', time: '16:46', status: 'seen' },
+//     ],
+//   },
+//   {
+//     id: 'team-ducky',
+//     name: 'Team Ducky Social',
+//     avatarColor: '#7b1fa2',
+//     status: 'offline',
+//     activeLabel: 'Hoạt động hôm qua',
+//     lastMessage: 'Sprint mới bắt đầu lúc 9:00 nhé mọi người.',
+//     lastMessageAt: 'Hôm qua',
+//     unreadCount: 5,
+//     messages: [
+//       { id: 'team-1', sender: 'them', text: 'Mọi người review backlog giúp mình.', time: '09:00' },
+//       { id: 'team-2', sender: 'me', text: 'Đã xem, phần UI mình nhận nhé.', time: '09:10', status: 'seen' },
+//       { id: 'team-3', sender: 'them', text: 'Sprint mới bắt đầu lúc 9:00 nhé mọi người.', time: '09:35' },
+//     ],
+//   },
+// ];

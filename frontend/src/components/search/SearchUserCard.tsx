@@ -4,6 +4,7 @@ import ChatBubbleRoundedIcon from '@mui/icons-material/ChatBubbleRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import HourglassEmptyRoundedIcon from '@mui/icons-material/HourglassEmptyRounded';
 import { useNavigate } from 'react-router-dom';
+import { useMiniChat } from '../../services/miniChatStore';
 import type { UserSearchResult } from '../../types/user';
 
 type SearchUserCardProps = {
@@ -14,8 +15,9 @@ type SearchUserCardProps = {
   onMessage?: (user: UserSearchResult) => void;
 };
 
-function SearchUserCard({ user, actionLoading = false, onAddFriend, onAcceptFriend, onMessage }: SearchUserCardProps) {
+function SearchUserCard({ user, actionLoading = false, onAddFriend, onAcceptFriend }: SearchUserCardProps) {
   const navigate = useNavigate();
+  const { openMiniChat } = useMiniChat();
 
   const displayName = user.fullName || user.userName || 'Người dùng Ducky';
   const avatarText = displayName.charAt(0).toUpperCase();
@@ -26,13 +28,17 @@ function SearchUserCard({ user, actionLoading = false, onAddFriend, onAcceptFrie
     navigate(`/profile/${user.id}`);
   };
 
+  const handleMessage = () => {
+    void openMiniChat(user.id);
+  };
+
   const renderActionButton = () => {
     if (friendshipStatus === 'FRIEND') {
       return (
         <Button
           className="search-user-message-btn"
           startIcon={<ChatBubbleRoundedIcon />}
-          onClick={() => onMessage?.(user)}
+          onClick={handleMessage}
         >
           Nhắn tin
         </Button>

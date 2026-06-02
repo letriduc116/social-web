@@ -89,7 +89,7 @@ const getPostsByUserId = async (userId: string): Promise<PostItem[]> => {
     });
 
     return unwrap(response) || [];
-  } catch (error) {
+  } catch {
     // Fallback cho BE cũ chưa có /api/v1/post/user
     if (userId === viewerId) return getMyPosts();
     const allPosts = await getAllPosts();

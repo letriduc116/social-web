@@ -1,4 +1,6 @@
 import { useState, type MouseEvent } from 'react';
+import { useParams } from 'react-router-dom';
+import { useMiniChat } from '../../services/miniChatStore';
 import {
   Box,
   Button,
@@ -51,6 +53,18 @@ function ProfileActions({
   onEditProfile,
   onMessage,
 }: ProfileActionsProps) {
+  const { userId } = useParams<{ userId: string }>();
+  const { openMiniChat } = useMiniChat();
+
+  const handleMessageClick = () => {
+    if (userId) {
+      void openMiniChat(userId);
+      return;
+    }
+
+    onMessage?.();
+  };
+
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [openUnfriendDialog, setOpenUnfriendDialog] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -251,7 +265,7 @@ function ProfileActions({
     <Box className="profile-actions">
       {renderFriendButton()}
 
-      <Button className="profile-message-btn" startIcon={<ChatBubbleRoundedIcon />} onClick={onMessage}>
+      <Button className="profile-message-btn" startIcon={<ChatBubbleRoundedIcon />} onClick={handleMessageClick}>
         Nhắn tin
       </Button>
 

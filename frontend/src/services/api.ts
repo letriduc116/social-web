@@ -2,6 +2,7 @@ import axios from 'axios';
 import type { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
 const BASE_URL = 'http://localhost:8080/api';
+// const BASE_URL = 'http://192.168.1.200:8080/api';
 const ACCESS_TOKEN_KEY = 'accessToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
 

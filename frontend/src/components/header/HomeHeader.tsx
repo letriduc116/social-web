@@ -275,7 +275,7 @@ function HomeHeader() {
               >
                 <MessengerOutlineRoundedIcon />
               </IconButton>
-              {openMenu === 'messages' && <MessengerMenu />}
+              {openMenu === 'messages' && <MessengerMenu onClose={closeMenu} />}
             </Box>
 
             <Box className="fb-action-wrapper">
