@@ -1,14 +1,16 @@
 import SockJS from 'sockjs-client';
 import { Client, type IMessage } from '@stomp/stompjs';
-import type { ChatConversation, ChatMessage, SendMessagePayload, TypingPayload } from '../types/chat';
+import type { ChatCallSignal, ChatConversation, ChatMessage, SendMessagePayload, TypingPayload } from '../types/chat';
 
 const WS_URL = 'http://localhost:8080/ws';
+// const WS_URL = 'http://192.168.1.200:8080/ws';
 const ACCESS_TOKEN_KEY = 'accessToken';
 
 type ChatSocketHandlers = {
   onMessage?: (message: ChatMessage) => void;
   onConversation?: (conversation: ChatConversation) => void;
   onTyping?: (payload: TypingPayload) => void;
+  onCall?: (payload: ChatCallSignal) => void;
   onConnect?: () => void;
   onError?: (error: unknown) => void;
 };
@@ -79,6 +81,11 @@ const createClient = () => {
         const payload = safeParse<TypingPayload>(message);
         if (payload) emit('onTyping', payload);
       });
+
+      client.subscribe('/user/queue/call', (message) => {
+        const payload = safeParse<ChatCallSignal>(message);
+        if (payload) emit('onCall', payload);
+      });
     },
     onStompError: (frame) => emit('onError', frame),
     onWebSocketError: (event) => emit('onError', event),
@@ -128,6 +135,17 @@ export const sendChatTypingSocket = (payload: TypingPayload) => {
 
   stompClient.publish({
     destination: '/app/chat.typing',
+    body: JSON.stringify(payload),
+  });
+
+  return true;
+};
+
+export const sendChatCallSignalSocket = (payload: ChatCallSignal) => {
+  if (!stompClient?.connected) return false;
+
+  stompClient.publish({
+    destination: '/app/chat.call',
     body: JSON.stringify(payload),
   });
 

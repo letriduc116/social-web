@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import MiniChatWindow from '../components/chat/MiniChatWindow';
+import ChatCallProvider from './ChatCallContext';
+import { useChatCall } from '../hook/useChatCall';
 import { MiniChatContext } from '../services/miniChatStore';
 import { buildChatPreview, chatService, resolveAttachmentType } from '../services/chatService';
 import {
@@ -37,7 +39,7 @@ function upsertConversation(conversations: ChatConversation[], incoming: ChatCon
   const merged: ChatConversation = {
     ...(current ?? incoming),
     ...incoming,
-    messages: incoming.messages?.length > 0 ? incoming.messages : current?.messages ?? [],
+    messages: incoming.messages?.length > 0 ? incoming.messages : (current?.messages ?? []),
     typing: current?.typing ?? incoming.typing ?? false,
   };
 
@@ -76,10 +78,11 @@ function updateConversationWithMessage(conversations: ChatConversation[], messag
   return hasConversation ? sortConversations(next) : conversations;
 }
 
-function MiniChatProvider({ children }: MiniChatProviderProps) {
+function MiniChatProviderInner({ children }: MiniChatProviderProps) {
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [openChats, setOpenChats] = useState<OpenMiniChat[]>([]);
+  const { startCall } = useChatCall();
 
   const conversationsRef = useRef<ChatConversation[]>([]);
   const openChatsRef = useRef<OpenMiniChat[]>([]);
@@ -363,14 +366,25 @@ function MiniChatProvider({ children }: MiniChatProviderProps) {
             onSendMessage={() => void sendMiniMessage(chat.conversationId)}
             onSendQuickText={(text) => void sendMiniText(chat.conversationId, text)}
             onSendAttachment={(file, type) => void sendMiniAttachment(chat.conversationId, file, type)}
-            onSendSticker={(sticker, attachmentUrl) => void sendMiniSticker(chat.conversationId, sticker, attachmentUrl)}
+            onSendSticker={(sticker, attachmentUrl) =>
+              void sendMiniSticker(chat.conversationId, sticker, attachmentUrl)
+            }
             onRestore={() => void openMiniChat(chat.conversationId)}
             onMinimize={() => minimizeMiniChat(chat.conversationId)}
             onClose={() => closeMiniChat(chat.conversationId)}
+            onStartCall={(video) => void startCall(conversation, video)}
           />
         );
       })}
     </MiniChatContext.Provider>
+  );
+}
+
+function MiniChatProvider(props: MiniChatProviderProps) {
+  return (
+    <ChatCallProvider>
+      <MiniChatProviderInner {...props} />
+    </ChatCallProvider>
   );
 }
 

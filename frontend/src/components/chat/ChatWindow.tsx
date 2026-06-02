@@ -44,6 +44,7 @@ type ChatWindowProps = {
   onSendQuickText: (text: string) => void;
   onSendAttachment: (file: File, preferredType?: ChatAttachmentMessageType) => void;
   onSendSticker: (sticker: string, attachmentUrl?: string) => void;
+  onStartCall?: (video: boolean) => void;
 };
 
 function renderMessageContent(message: ChatMessage) {
@@ -89,6 +90,7 @@ function ChatWindow({
   onSendQuickText,
   onSendAttachment,
   onSendSticker,
+  onStartCall,
 }: ChatWindowProps) {
   const messageAreaRef = useRef<HTMLDivElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -216,10 +218,10 @@ function ChatWindow({
         </div>
 
         <div className="chat-window-actions" aria-label="Tùy chọn cuộc gọi và thông tin">
-          <button type="button" aria-label="Gọi thoại">
+          <button type="button" aria-label="Gọi thoại" onClick={() => onStartCall?.(false)}>
             <CallRoundedIcon />
           </button>
-          <button type="button" aria-label="Gọi video">
+          <button type="button" aria-label="Gọi video" onClick={() => onStartCall?.(true)}>
             <VideocamRoundedIcon />
           </button>
           <button type="button" aria-label="Thông tin hội thoại">

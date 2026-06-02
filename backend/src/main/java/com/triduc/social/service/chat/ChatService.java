@@ -1,9 +1,11 @@
 package com.triduc.social.service.chat;
 
 import com.triduc.social.dto.request.chat.ChatSendMessageRequest;
+import com.triduc.social.dto.request.chat.ChatCallSignalRequest;
 import com.triduc.social.dto.request.chat.ChatTypingRequest;
 import com.triduc.social.dto.response.chat.ChatConversationResponse;
 import com.triduc.social.dto.response.chat.ChatMessageResponse;
+import com.triduc.social.dto.response.chat.ChatCallSignalResponse;
 import com.triduc.social.entity.User;
 import com.triduc.social.entity.ChatConversation;
 import com.triduc.social.entity.ChatMessage;
@@ -85,18 +87,10 @@ public class ChatService {
         String content = request.getContent() == null ? "" : request.getContent().trim();
         String attachmentUrl = request.getAttachmentUrl();
 
-        boolean requiresAttachment = type == ChatMessageType.IMAGE
-                || type == ChatMessageType.VIDEO
-                || type == ChatMessageType.AUDIO
-                || type == ChatMessageType.FILE;
-
         if (type == ChatMessageType.TEXT && content.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nội dung tin nhắn không được trống");
         }
-        if (type == ChatMessageType.STICKER && content.isBlank() && (attachmentUrl == null || attachmentUrl.isBlank())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sticker không hợp lệ");
-        }
-        if (requiresAttachment && (attachmentUrl == null || attachmentUrl.isBlank())) {
+        if (type != ChatMessageType.TEXT && (attachmentUrl == null || attachmentUrl.isBlank())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tin nhắn tệp cần có attachmentUrl");
         }
 
@@ -136,6 +130,40 @@ public class ChatService {
         }
 
         return toMessageResponse(saved, currentUserId);
+    }
+
+    @Transactional
+    public void pushCallSignal(String currentUserId, ChatCallSignalRequest request) {
+        if (request == null || request.getConversationId() == null || request.getConversationId().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "conversationId không hợp lệ");
+        }
+
+        if (request.getSignalType() == null || request.getSignalType().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "signalType không hợp lệ");
+        }
+
+        ensureParticipant(request.getConversationId(), currentUserId);
+
+        User caller = getUser(currentUserId);
+        List<ChatParticipant> participants = participantRepository.findByConversation_Id(request.getConversationId());
+
+        ChatCallSignalResponse response = ChatCallSignalResponse.builder()
+                .conversationId(request.getConversationId())
+                .signalType(request.getSignalType())
+                .video(request.isVideo())
+                .callerId(caller.getId())
+                .callerName(getDisplayName(caller))
+                .callerAvatar(caller.getProfileImage())
+                .sdp(request.getSdp())
+                .candidate(request.getCandidate())
+                .build();
+
+        for (ChatParticipant participant : participants) {
+            String receiverUserId = participant.getUser().getId();
+            if (!receiverUserId.equals(currentUserId)) {
+                messagingTemplate.convertAndSendToUser(receiverUserId, "/queue/call", response);
+            }
+        }
     }
 
     @Transactional
@@ -299,10 +327,7 @@ public class ChatService {
     private String buildLastMessage(ChatMessage message, String currentUserId) {
         String prefix = message.getSender().getId().equals(currentUserId) ? "Bạn: " : "";
         if (message.getType() == ChatMessageType.IMAGE) return prefix + "Đã gửi một ảnh";
-        if (message.getType() == ChatMessageType.VIDEO) return prefix + "Đã gửi một video";
-        if (message.getType() == ChatMessageType.AUDIO) return prefix + "Đã gửi một ghi âm";
         if (message.getType() == ChatMessageType.FILE) return prefix + "Đã gửi một tệp";
-        if (message.getType() == ChatMessageType.STICKER) return prefix + "Đã gửi một sticker";
         return prefix + (message.getContent() == null ? "" : message.getContent());
     }
 

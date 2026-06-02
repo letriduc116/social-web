@@ -37,6 +37,7 @@ type MiniChatWindowProps = {
   onRestore: () => void;
   onMinimize: () => void;
   onClose: () => void;
+  onStartCall?: (video: boolean) => void;
 };
 
 function renderMiniMessageContent(message: ChatMessage) {
@@ -87,6 +88,7 @@ function MiniChatWindow({
   onRestore,
   onMinimize,
   onClose,
+  onStartCall,
 }: MiniChatWindowProps) {
   const messageAreaRef = useRef<HTMLDivElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -243,12 +245,12 @@ function MiniChatWindow({
             </button>
           </Tooltip>
           <Tooltip title="Gọi thoại">
-            <button type="button" aria-label="Gọi thoại">
+            <button type="button" aria-label="Gọi thoại" onClick={() => onStartCall?.(false)}>
               <CallRoundedIcon />
             </button>
           </Tooltip>
           <Tooltip title="Gọi video">
-            <button type="button" aria-label="Gọi video">
+            <button type="button" aria-label="Gọi video" onClick={() => onStartCall?.(true)}>
               <VideocamRoundedIcon />
             </button>
           </Tooltip>

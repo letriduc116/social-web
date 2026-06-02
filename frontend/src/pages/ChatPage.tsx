@@ -3,6 +3,7 @@ import HomeHeader from '../components/header/HomeHeader';
 import ChatDetailsPanel from '../components/chat/ChatDetailsPanel';
 import ChatSidebar from '../components/chat/ChatSidebar';
 import ChatWindow from '../components/chat/ChatWindow';
+import { useChatCall } from '../hook/useChatCall';
 import { buildChatPreview, chatService, resolveAttachmentType } from '../services/chatService';
 import {
   isChatSocketConnected,
@@ -27,7 +28,7 @@ function upsertConversation(conversations: ChatConversation[], incoming: ChatCon
   const merged: ChatConversation = {
     ...(current ?? incoming),
     ...incoming,
-    messages: incoming.messages?.length > 0 ? incoming.messages : current?.messages ?? [],
+    messages: incoming.messages?.length > 0 ? incoming.messages : (current?.messages ?? []),
     typing: current?.typing ?? incoming.typing ?? false,
   };
 
@@ -77,6 +78,7 @@ function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const { startCall } = useChatCall();
   const typingTimerRef = useRef<number | null>(null);
   const selectedConversationIdRef = useRef('');
 
@@ -103,7 +105,9 @@ function ChatPage() {
       const messages = await chatService.getMessages(conversationId, 0, 30);
       setConversations((prev) =>
         prev.map((conversation) =>
-          conversation.id === conversationId ? { ...conversation, messages, unreadCount: 0, typing: false } : conversation,
+          conversation.id === conversationId
+            ? { ...conversation, messages, unreadCount: 0, typing: false }
+            : conversation,
         ),
       );
       await chatService.markAsRead(conversationId);
@@ -325,6 +329,7 @@ function ChatPage() {
               onSendQuickText={handleSendText}
               onSendAttachment={handleSendAttachment}
               onSendSticker={handleSendSticker}
+              onStartCall={(video) => void startCall(selectedConversation, video)}
             />
 
             <ChatDetailsPanel conversation={selectedConversation} />
@@ -333,7 +338,10 @@ function ChatPage() {
           <section className="chat-window" aria-label="Đoạn chat">
             <div className="chat-message-area" style={{ alignItems: 'center', justifyContent: 'center' }}>
               <p className="chat-empty-text">
-                {loading ? 'Đang tải đoạn chat...' : errorMessage || 'Chưa có đoạn chat nào. Hãy bấm Nhắn tin ở trang cá nhân hoặc trang tìm kiếm để bắt đầu.'}
+                {loading
+                  ? 'Đang tải đoạn chat...'
+                  : errorMessage ||
+                    'Chưa có đoạn chat nào. Hãy bấm Nhắn tin ở trang cá nhân hoặc trang tìm kiếm để bắt đầu.'}
               </p>
             </div>
           </section>
@@ -341,7 +349,19 @@ function ChatPage() {
       </main>
 
       {errorMessage && selectedConversation && (
-        <div style={{ position: 'fixed', left: '50%', bottom: 24, transform: 'translateX(-50%)', background: '#222', color: '#fff', padding: '10px 14px', borderRadius: 8, zIndex: 9999 }}>
+        <div
+          style={{
+            position: 'fixed',
+            left: '50%',
+            bottom: 24,
+            transform: 'translateX(-50%)',
+            background: '#222',
+            color: '#fff',
+            padding: '10px 14px',
+            borderRadius: 8,
+            zIndex: 9999,
+          }}
+        >
           {errorMessage}
         </div>
       )}

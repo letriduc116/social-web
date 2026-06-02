@@ -56,3 +56,22 @@ export type ChatAttachmentResponse = {
   contentType: string;
   size: number;
 };
+
+export type ChatCallSignalType =
+  | 'CALL_OFFER'
+  | 'CALL_ANSWER'
+  | 'ICE_CANDIDATE'
+  | 'CALL_END'
+  | 'CALL_REJECT'
+  | 'CALL_CANCEL';
+
+export type ChatCallSignal = {
+  conversationId: string;
+  signalType: ChatCallSignalType;
+  video: boolean;
+  callerId?: string;
+  callerName?: string;
+  callerAvatar?: string | null;
+  sdp?: RTCSessionDescriptionInit | Record<string, unknown> | null;
+  candidate?: RTCIceCandidateInit | Record<string, unknown> | null;
+};

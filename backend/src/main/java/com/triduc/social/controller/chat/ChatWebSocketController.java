@@ -1,6 +1,7 @@
 package com.triduc.social.controller.chat;
 
 import com.triduc.social.dto.request.chat.ChatSendMessageRequest;
+import com.triduc.social.dto.request.chat.ChatCallSignalRequest;
 import com.triduc.social.dto.request.chat.ChatTypingRequest;
 import com.triduc.social.service.chat.ChatService;
 import lombok.RequiredArgsConstructor;
@@ -24,5 +25,10 @@ public class ChatWebSocketController {
     @MessageMapping("/chat.typing")
     public void typing(@Payload ChatTypingRequest request, Principal principal) {
         chatService.pushTyping(principal.getName(), request);
+    }
+
+    @MessageMapping("/chat.call")
+    public void callSignal(@Payload ChatCallSignalRequest request, Principal principal) {
+        chatService.pushCallSignal(principal.getName(), request);
     }
 }
