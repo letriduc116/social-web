@@ -416,6 +416,11 @@ function ProfilePage() {
     setToast('Tính năng nhắn tin có thể nối vào module chat của bạn sau.');
   };
 
+  const handleReportProfile = async (reasonId: string) => {
+    console.log('Report profile UI only:', { targetUserId, reasonId });
+    setToast('Đã ghi nhận báo cáo trang cá nhân');
+  };
+
   if (loading) {
     return (
       <div className="ducky-page">
@@ -506,6 +511,7 @@ function ProfilePage() {
                 onUnfriend={handleUnfriend}
                 onEditProfile={() => setOpenEditProfile(true)}
                 onMessage={handleMessage}
+                onReportProfile={handleReportProfile}
               />
             </ProfileHero>
 

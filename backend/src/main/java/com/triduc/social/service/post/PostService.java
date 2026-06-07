@@ -238,4 +238,27 @@ public class PostService {
         return followRepository.countByUserIdAndFollowerId(userAId, userBId) > 0
                 && followRepository.countByUserIdAndFollowerId(userBId, userAId) > 0;
     }
+
+    @Transactional
+    public void deleteMyPost(String postId, String authenticatedEmail) {
+        if (postId == null || postId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thiếu postId");
+        }
+
+        if (authenticatedEmail == null || authenticatedEmail.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không tìm thấy thông tin xác thực");
+        }
+
+        User currentUser = userRepository.findByEmail(authenticatedEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Người dùng không tồn tại"));
+
+        Post post = repo.findById(postId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bài viết không tồn tại"));
+
+        if (post.getUser() == null || !post.getUser().getId().equals(currentUser.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn chỉ có thể xoá bài viết của chính mình");
+        }
+
+        deletePost(postId);
+    }
 }
