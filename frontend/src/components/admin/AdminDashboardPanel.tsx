@@ -1,132 +1,131 @@
 import { useEffect, useMemo, useState } from 'react';
 import { adminService } from '../../services/adminService';
-import type { AdminCommentResponse, AdminPostResponse, AdminSection, AdminTrendPoint, AdminUserResponse } from '../../types/admin';
+import type {
+  AdminCommentResponse,
+  AdminPostResponse,
+  AdminReportStatsResponse,
+  AdminTrendPoint,
+  AdminUserResponse,
+} from '../../types/admin';
 import AdminActivityChart from './AdminActivityChart';
-import AdminProgressBar from './AdminProgressBar';
+import AdminDonutChart from './AdminDonutChart';
+import AdminRegistrationChart from './AdminRegistrationChart';
 import AdminStatCard from './AdminStatCard';
 
-type DashboardStats = {
-  users: number;
-  admins: number;
-  normalUsers: number;
-  posts: number;
-  comments: number;
-  sharedPosts: number;
-  publicPosts: number;
-  replies: number;
+type DashboardState = {
+  users: AdminUserResponse[];
+  posts: AdminPostResponse[];
+  comments: AdminCommentResponse[];
+  postTotal: number;
+  commentTotal: number;
+  reportStats: AdminReportStatsResponse;
 };
 
-type AdminDashboardPanelProps = {
-  onChangeSection?: (section: AdminSection) => void;
+const emptyReportStats: AdminReportStatsResponse = {
+  totalReports: 0,
+  pendingReports: 0,
+  reviewingReports: 0,
+  resolvedReports: 0,
+  rejectedReports: 0,
+  userReports: 0,
+  postReports: 0,
+  commentReports: 0,
 };
 
-const formatDateTime = (value?: string) => {
-  if (!value) return '-';
+const initialState: DashboardState = {
+  users: [],
+  posts: [],
+  comments: [],
+  postTotal: 0,
+  commentTotal: 0,
+  reportStats: emptyReportStats,
+};
+
+function getCreateTime(user: AdminUserResponse) {
+  return user.createdAt || user.createAt || '';
+}
+
+function formatDay(date: Date) {
+  return `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function toDateKey(value?: string) {
+  if (!value) return '';
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString('vi-VN');
-};
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toISOString().slice(0, 10);
+}
 
-const getLastDays = (days = 7) => {
-  const today = new Date();
-  return Array.from({ length: days }).map((_, index) => {
-    const date = new Date(today);
-    date.setDate(today.getDate() - (days - index - 1));
-    date.setHours(0, 0, 0, 0);
-
-    const key = date.toISOString().slice(0, 10);
-    const label = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-
-    return { key, label };
+function buildSevenDays() {
+  const now = new Date();
+  return Array.from({ length: 7 }).map((_, index) => {
+    const date = new Date(now);
+    date.setDate(now.getDate() - (6 - index));
+    return {
+      key: date.toISOString().slice(0, 10),
+      label: formatDay(date),
+    };
   });
-};
+}
 
-const buildTrend = (posts: AdminPostResponse[], comments: AdminCommentResponse[]): AdminTrendPoint[] => {
-  const days = getLastDays(7);
+function buildTrend(posts: AdminPostResponse[], comments: AdminCommentResponse[]): AdminTrendPoint[] {
+  const days = buildSevenDays().map((item) => ({ ...item, posts: 0, comments: 0 }));
+  const byKey = new Map(days.map((item) => [item.key, item]));
 
-  return days.map((day) => ({
-    label: day.label,
-    posts: posts.filter((post) => (post.createAt || '').slice(0, 10) === day.key).length,
-    comments: comments.filter((comment) => (comment.createAt || '').slice(0, 10) === day.key).length,
-  }));
-};
-
-function AdminDashboardPanel({ onChangeSection }: AdminDashboardPanelProps) {
-  const [users, setUsers] = useState<AdminUserResponse[]>([]);
-  const [recentPosts, setRecentPosts] = useState<AdminPostResponse[]>([]);
-  const [recentComments, setRecentComments] = useState<AdminCommentResponse[]>([]);
-  const [trend, setTrend] = useState<AdminTrendPoint[]>(buildTrend([], []));
-  const [stats, setStats] = useState<DashboardStats>({
-    users: 0,
-    admins: 0,
-    normalUsers: 0,
-    posts: 0,
-    comments: 0,
-    sharedPosts: 0,
-    publicPosts: 0,
-    replies: 0,
+  posts.forEach((post) => {
+    const item = byKey.get(toDateKey(post.createAt));
+    if (item) item.posts += 1;
   });
+
+  comments.forEach((comment) => {
+    const item = byKey.get(toDateKey(comment.createAt));
+    if (item) item.comments += 1;
+  });
+
+  return days.map(({ label, posts: postCount, comments: commentCount }) => ({ label, posts: postCount, comments: commentCount }));
+}
+
+function buildRegistrationTrend(users: AdminUserResponse[]) {
+  const days = buildSevenDays().map((item) => ({ ...item, value: 0 }));
+  const byKey = new Map(days.map((item) => [item.key, item]));
+
+  users.forEach((user) => {
+    const item = byKey.get(toDateKey(getCreateTime(user)));
+    if (item) item.value += 1;
+  });
+
+  return days.map(({ label, value }) => ({ label, value }));
+}
+
+function AdminDashboardPanel() {
+  const [state, setState] = useState<DashboardState>(initialState);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  const latestActivities = useMemo(() => {
-    const postActivities = recentPosts.slice(0, 4).map((post) => ({
-      id: `post-${post.id}`,
-      type: 'Bài viết',
-      title: post.content || '(Không có nội dung)',
-      author: post.authorName || post.authorEmail || 'Người dùng',
-      time: post.createAt,
-    }));
-
-    const commentActivities = recentComments.slice(0, 4).map((comment) => ({
-      id: `comment-${comment.id}`,
-      type: comment.parentCommentId ? 'Phản hồi' : 'Bình luận',
-      title: comment.content || '(Không có nội dung)',
-      author: comment.senderName || comment.senderEmail || 'Người dùng',
-      time: comment.createAt,
-    }));
-
-    return [...postActivities, ...commentActivities]
-      .sort((a, b) => new Date(b.time || 0).getTime() - new Date(a.time || 0).getTime())
-      .slice(0, 6);
-  }, [recentPosts, recentComments]);
 
   useEffect(() => {
     let mounted = true;
 
-    async function loadStats() {
+    async function loadDashboard() {
       try {
         setLoading(true);
         setError('');
 
-        const [userList, posts, comments] = await Promise.all([
+        const [users, postsPage, commentsPage, reportStats] = await Promise.all([
           adminService.getUsers(),
           adminService.getPosts({ page: 0, size: 50 }),
           adminService.getComments({ page: 0, size: 50 }),
+          adminService.getReportStats().catch(() => emptyReportStats),
         ]);
 
         if (!mounted) return;
 
-        const postItems = posts.content || [];
-        const commentItems = comments.content || [];
-        const admins = userList.filter((user) => String(user.role || '').toUpperCase() === 'ADMIN').length;
-        const sharedPosts = postItems.filter((post) => post.shared).length;
-        const publicPosts = postItems.filter((post) => String(post.visibility || '').toUpperCase() === 'EVERYONE').length;
-        const replies = commentItems.filter((comment) => !!comment.parentCommentId).length;
-
-        setUsers(userList);
-        setRecentPosts(postItems);
-        setRecentComments(commentItems);
-        setTrend(buildTrend(postItems, commentItems));
-        setStats({
-          users: userList.length,
-          admins,
-          normalUsers: Math.max(userList.length - admins, 0),
-          posts: posts.totalElements || 0,
-          comments: comments.totalElements || 0,
-          sharedPosts,
-          publicPosts,
-          replies,
+        setState({
+          users,
+          posts: postsPage.content || [],
+          comments: commentsPage.content || [],
+          postTotal: postsPage.totalElements || 0,
+          commentTotal: commentsPage.totalElements || 0,
+          reportStats,
         });
       } catch (err) {
         if (!mounted) return;
@@ -136,96 +135,107 @@ function AdminDashboardPanel({ onChangeSection }: AdminDashboardPanelProps) {
       }
     }
 
-    loadStats();
+    void loadDashboard();
 
     return () => {
       mounted = false;
     };
   }, []);
 
+  const roleStats = useMemo(() => {
+    const admin = state.users.filter((user) => String(user.role || '').toUpperCase() === 'ADMIN').length;
+    const manager = state.users.filter((user) => String(user.role || '').toUpperCase() === 'MANAGER').length;
+    const user = state.users.filter((item) => !['ADMIN', 'MANAGER'].includes(String(item.role || '').toUpperCase())).length;
+    return { admin, manager, user };
+  }, [state.users]);
+
+  const contentStats = useMemo(() => {
+    const visiblePosts = state.posts.filter((post) => !post.hidden).length;
+    const hiddenPosts = state.posts.filter((post) => post.hidden).length;
+    const visibleComments = state.comments.filter((comment) => !comment.hidden).length;
+    const hiddenComments = state.comments.filter((comment) => comment.hidden).length;
+    return { visiblePosts, hiddenPosts, visibleComments, hiddenComments };
+  }, [state.posts, state.comments]);
+
+  const trendData = useMemo(() => buildTrend(state.posts, state.comments), [state.posts, state.comments]);
+  const registrationData = useMemo(() => buildRegistrationTrend(state.users), [state.users]);
+
+  const usersWithDate = useMemo(() => state.users.filter((user) => Boolean(toDateKey(getCreateTime(user)))).length, [state.users]);
+  const pendingReports = state.reportStats.pendingReports + state.reportStats.reviewingReports;
+
   return (
-    <div className="admin-panel admin-dashboard">
-      {error && <div className="admin-alert admin-alert--error">{error}</div>}
+    <div className="admin-panel">
+      {error ? <div className="admin-alert admin-alert--error">{error}</div> : null}
 
-      <div className="admin-stat-grid admin-stat-grid--wide">
-        <AdminStatCard label="Người dùng" value={loading ? '...' : stats.users} note={`${stats.admins} admin · ${stats.normalUsers} user`} icon="👥" />
-        <AdminStatCard label="Bài viết" value={loading ? '...' : stats.posts} note={`${stats.sharedPosts} bài share trong trang gần nhất`} icon="📝" />
-        <AdminStatCard label="Bình luận" value={loading ? '...' : stats.comments} note={`${stats.replies} reply trong trang gần nhất`} icon="💬" />
-        <AdminStatCard label="Hàng chờ report" value="0" note="Chưa có API report từ BE" icon="🚨" />
+      <div className="admin-stat-grid admin-stat-grid--four">
+        <AdminStatCard label="Người dùng" value={loading ? '...' : state.users.length} note={`${roleStats.admin + roleStats.manager} tài khoản quản trị/kiểm duyệt`} icon="👥" />
+        <AdminStatCard label="Bài viết" value={loading ? '...' : state.postTotal} note={`${contentStats.visiblePosts} bài đang hiển thị trong trang mới nhất`} icon="📝" />
+        <AdminStatCard label="Bình luận" value={loading ? '...' : state.commentTotal} note={`${state.comments.filter((comment) => comment.parentCommentId).length} reply trong trang mới nhất`} icon="💬" />
+        <AdminStatCard label="Hàng chờ report" value={loading ? '...' : pendingReports} note={`${state.reportStats.totalReports} báo cáo trong hệ thống`} icon="🚨" />
       </div>
 
-      <div className="admin-dashboard-grid">
-        <div className="admin-card admin-card--chart">
+      <div className="admin-dashboard-grid admin-dashboard-grid--wide">
+        <div className="admin-card admin-dashboard-card">
           <div className="admin-card__head">
             <div>
-              <h2>Hoạt động 7 ngày gần đây</h2>
-              <span>Thống kê dựa trên 50 bài viết/bình luận mới nhất BE trả về.</span>
+              <h2>Hoạt động nội dung 7 ngày</h2>
+              <span>Biểu đồ cột theo bài viết và bình luận mới nhất trong hệ thống.</span>
             </div>
           </div>
-          <AdminActivityChart data={trend} loading={loading} />
+          <AdminActivityChart data={trendData} loading={loading} />
         </div>
 
-        <div className="admin-card admin-card--insight">
-          <div className="admin-card__head">
-            <div>
-              <h2>Phân bố nhanh</h2>
-              <span>Tỉ lệ để admin quan sát hệ thống trực quan hơn.</span>
-            </div>
-          </div>
-
-          <div className="admin-insight-list">
-            <AdminProgressBar label="Tài khoản ADMIN" value={stats.admins} total={Math.max(stats.users, 1)} note="Không nên xóa admin đang đăng nhập." />
-            <AdminProgressBar label="Bài viết công khai" value={stats.publicPosts} total={Math.max(recentPosts.length, 1)} note="Tính trên trang bài viết mới nhất." />
-            <AdminProgressBar label="Bình luận dạng reply" value={stats.replies} total={Math.max(recentComments.length, 1)} note="Tính trên trang bình luận mới nhất." />
-          </div>
-        </div>
+        <AdminDonutChart
+          title="Phân quyền tài khoản"
+          subtitle="Tỉ lệ USER / MANAGER / ADMIN hiện có."
+          totalLabel="tài khoản"
+          segments={[
+            { label: 'USER', value: roleStats.user, color: '#3b82f6' },
+            { label: 'MANAGER', value: roleStats.manager, color: '#a78bfa' },
+            { label: 'ADMIN', value: roleStats.admin, color: '#f59e0b' },
+          ]}
+        />
       </div>
 
-      <div className="admin-dashboard-grid">
-        <div className="admin-card">
-          <div className="admin-card__head">
-            <div>
-              <h2>Hoạt động mới</h2>
-              <span>Những nội dung mới nhất trong hệ thống.</span>
-            </div>
-          </div>
+      <div className="admin-dashboard-grid admin-dashboard-grid--wide">
+        <AdminRegistrationChart data={registrationData} totalKnown={usersWithDate} unknownCount={Math.max(state.users.length - usersWithDate, 0)} loading={loading} />
 
-          <div className="admin-activity-list">
-            {latestActivities.map((item) => (
-              <div className="admin-activity-item" key={item.id}>
-                <span>{item.type}</span>
-                <div>
-                  <strong>{item.title}</strong>
-                  <small>{item.author} · {formatDateTime(item.time)}</small>
-                </div>
-              </div>
-            ))}
+        <AdminDonutChart
+          title="Trạng thái báo cáo"
+          subtitle="Tình trạng các report trong hệ thống."
+          totalLabel="báo cáo"
+          segments={[
+            { label: 'Chờ xử lý', value: state.reportStats.pendingReports, color: '#f59e0b' },
+            { label: 'Đang xem xét', value: state.reportStats.reviewingReports, color: '#3b82f6' },
+            { label: 'Đã xử lý', value: state.reportStats.resolvedReports, color: '#22c55e' },
+            { label: 'Từ chối', value: state.reportStats.rejectedReports, color: '#ef4444' },
+          ]}
+        />
+      </div>
 
-            {!loading && latestActivities.length === 0 && <div className="admin-empty">Chưa có hoạt động để hiển thị.</div>}
+      <div className="admin-card admin-dashboard-card admin-dashboard-card--compact">
+        <div className="admin-card__head">
+          <div>
+            <h2>Tổng hợp hiển thị nội dung</h2>
+            <span>Quan sát nhanh số post/comment đang hiển thị và đã bị ẩn trong trang dữ liệu mới nhất.</span>
           </div>
         </div>
-
-        <div className="admin-card admin-guide-card">
-          <div className="admin-card__head">
-            <div>
-              <h2>Luồng kiểm duyệt đề xuất</h2>
-              <span>Chuẩn bị cho phần report sau khi bổ sung BE.</span>
-            </div>
+        <div className="admin-metric-grid">
+          <div className="admin-metric-card">
+            <span>Bài viết đang hiển thị</span>
+            <strong>{contentStats.visiblePosts}</strong>
           </div>
-
-          <div className="admin-guide-list admin-guide-list--vertical">
-            <button type="button" onClick={() => onChangeSection?.('posts')}>
-              <strong>1. Kiểm tra bài viết</strong>
-              <p>Lọc theo nội dung, quyền xem, loại bài và mức tương tác trước khi xóa.</p>
-            </button>
-            <button type="button" onClick={() => onChangeSection?.('comments')}>
-              <strong>2. Kiểm tra bình luận</strong>
-              <p>Lọc theo postId để xử lý toàn bộ bình luận trong một bài viết vi phạm.</p>
-            </button>
-            <button type="button" onClick={() => onChangeSection?.('reportedContent')}>
-              <strong>3. Hàng chờ báo cáo</strong>
-              <p>UI đã có sẵn, chỉ cần bổ sung BE report để đổ dữ liệu thật.</p>
-            </button>
+          <div className="admin-metric-card admin-metric-card--warning">
+            <span>Bài viết đã ẩn</span>
+            <strong>{contentStats.hiddenPosts}</strong>
+          </div>
+          <div className="admin-metric-card">
+            <span>Bình luận đang hiển thị</span>
+            <strong>{contentStats.visibleComments}</strong>
+          </div>
+          <div className="admin-metric-card admin-metric-card--warning">
+            <span>Bình luận đã ẩn</span>
+            <strong>{contentStats.hiddenComments}</strong>
           </div>
         </div>
       </div>

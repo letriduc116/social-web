@@ -16,6 +16,7 @@ import type {
 const API_URL = '/v1/post';
 const LIKE_API_URL = '/v1/like';
 const SAVED_POST_API_URL = '/v1/saved-post';
+const REPORT_API_URL = '/v1/reports';
 
 const unwrap = <T>(response: ApiResponse<T> | T): T => {
   if (response && typeof response === 'object' && 'data' in response) {
@@ -44,6 +45,7 @@ const uploadImages = async (files: File[]): Promise<string[]> => {
     formData.append('files', file);
   });
 
+  // BE upload ảnh đang dùng /file/upload, không nằm dưới /api.
   const response = await ApiService.upload<ApiResponse<string[]> | string[]>('/file/upload', formData, {
     baseURL: 'http://localhost:8080',
   });
@@ -90,7 +92,6 @@ const getPostsByUserId = async (userId: string): Promise<PostItem[]> => {
 
     return unwrap(response) || [];
   } catch {
-    // Fallback cho BE cũ chưa có /api/v1/post/user
     if (userId === viewerId) return getMyPosts();
     const allPosts = await getAllPosts();
     return allPosts.filter((post) => post.user?.id === userId);
@@ -186,15 +187,53 @@ const sharePost = async (postOrId: PostItem | string, payload: SharePostModalPay
   return unwrap(response);
 };
 
-const reportPost = async (postId: string, reasonId: string): Promise<void> => {
-  console.log('Report post UI only:', { postId, reasonId });
+const normalizeReportReason = (reasonId: string): string => {
+  switch (reasonId) {
+    case 'spam_or_scam':
+    case 'spam':
+      return 'spam';
+    case 'hate_or_harassment':
+    case 'harassment':
+      return 'harassment';
+    case 'violence':
+    case 'violence_or_inappropriate':
+      return 'violence';
+    case 'intellectual_property':
+      return 'intellectual_property';
+    default:
+      return reasonId || 'other';
+  }
+};
 
-  // Sau này nếu có BE report thật thì đổi thành:
-  // await ApiService.post('/v1/post/report', {
-  //   postId,
-  //   reasonId,
-  //   userId: authStorage.getCurrentUserId(),
-  // });
+const getReportDescription = (reasonId: string): string => {
+  switch (normalizeReportReason(reasonId)) {
+    case 'spam':
+      return 'Người dùng báo cáo bài viết có dấu hiệu spam, lừa đảo hoặc gian lận.';
+    case 'harassment':
+      return 'Người dùng báo cáo bài viết có nội dung quấy rối, thù ghét hoặc gây phiền toái.';
+    case 'violence':
+      return 'Người dùng báo cáo bài viết có yếu tố bạo lực, phản cảm hoặc không phù hợp cộng đồng.';
+    case 'intellectual_property':
+      return 'Người dùng báo cáo bài viết có thể vi phạm bản quyền, thương hiệu hoặc nội dung của người khác.';
+    default:
+      return 'Người dùng báo cáo bài viết có nội dung cần kiểm duyệt.';
+  }
+};
+
+const reportPost = async (postId: string, reasonId: string): Promise<void> => {
+  if (!postId) {
+    throw new Error('Thiếu postId để báo cáo bài viết');
+  }
+
+  const reason = normalizeReportReason(reasonId);
+
+  await ApiService.post<ApiResponse<unknown>, Record<string, string>>(`${REPORT_API_URL}/posts`, {
+    postId,
+    targetPostId: postId,
+    reason,
+    reasonId: reason,
+    description: getReportDescription(reason),
+  });
 };
 
 export const postService = {

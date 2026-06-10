@@ -2,7 +2,6 @@ package com.triduc.social.service.savedPost;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import com.triduc.social.dto.response.post.PostResponse;
 import com.triduc.social.entity.Post;
@@ -14,10 +13,6 @@ import com.triduc.social.repository.post.PostRepository;
 import com.triduc.social.repository.savedPost.SavedPostDetailRepository;
 import com.triduc.social.repository.savedPost.SavedPostRepository;
 import com.triduc.social.repository.user.UserRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 

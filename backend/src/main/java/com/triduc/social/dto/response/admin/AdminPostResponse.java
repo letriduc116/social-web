@@ -21,6 +21,7 @@ public class AdminPostResponse {
     private String authorAvatar;
 
     private String visibility;
+    private boolean hidden;
 
     private boolean shared;
     private String sharedPostId;

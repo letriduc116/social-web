@@ -44,6 +44,22 @@ public class AdminCommentService {
     }
 
     @Transactional
+    public AdminCommentResponse hideComment(String id) {
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy bình luận"));
+        comment.setHidden(true);
+        return mapToAdminCommentResponse(commentRepository.save(comment));
+    }
+
+    @Transactional
+    public AdminCommentResponse unhideComment(String id) {
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy bình luận"));
+        comment.setHidden(false);
+        return mapToAdminCommentResponse(commentRepository.save(comment));
+    }
+
+    @Transactional
     public void deleteCommentByAdmin(String id) {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy bình luận"));
@@ -60,6 +76,7 @@ public class AdminCommentService {
                 .id(comment.getId())
                 .content(comment.getContent())
                 .createAt(comment.getCreateAt())
+                .hidden(comment.isHidden())
 
                 .senderId(comment.getSender() != null ? comment.getSender().getId() : null)
                 .senderName(comment.getSender() != null ? comment.getSender().getFullName() : null)

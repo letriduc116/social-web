@@ -40,7 +40,7 @@ public class PostService {
      * Chỉ trả về bài mà currentId được phép xem theo visibility.
      */
     public List<PostResponse> getAllPosts(String currentId) {
-        List<Post> posts = repo.findByUser_IdNot(currentId, Sort.by(Sort.Direction.DESC, "createAt"));
+        List<Post> posts = repo.findByUser_IdNotAndHiddenFalse(currentId, Sort.by(Sort.Direction.DESC, "createAt"));
         List<PostResponse> rs = new ArrayList<>();
         for (Post p : posts) {
             if (canViewPostAndSharedOriginal(p, currentId)) {
@@ -54,7 +54,7 @@ public class PostService {
      * Lấy bài viết của một user bất kỳ theo góc nhìn của viewerId.
      */
     public List<PostResponse> getPostsByUser(String profileUserId, String viewerId) {
-        List<Post> posts = repo.findByUser_Id(profileUserId, Sort.by(Sort.Direction.DESC, "createAt"));
+        List<Post> posts = repo.findByUser_IdAndHiddenFalse(profileUserId, Sort.by(Sort.Direction.DESC, "createAt"));
         List<PostResponse> rs = new ArrayList<>();
         for (Post p : posts) {
             if (canViewPostAndSharedOriginal(p, viewerId)) {
@@ -101,6 +101,10 @@ public class PostService {
 
         // Nếu user share lại một bài share, ta luôn trỏ về bài gốc thật để tránh lồng nhiều tầng.
         Post rootOriginal = original.getSharedPost() != null ? original.getSharedPost() : original;
+
+        if (rootOriginal.isHidden()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bài viết đã bị ẩn nên không thể chia sẻ");
+        }
 
         if (rootOriginal.getUser().getId().equals(sharer.getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bạn không thể chia sẻ bài viết của chính mình bằng chức năng này");
@@ -213,7 +217,7 @@ public class PostService {
     }
 
     private boolean canViewPost(Post post, String currentUserId) {
-        if (post == null || post.getUser() == null || currentUserId == null || currentUserId.isBlank()) {
+        if (post == null || post.isHidden() || post.getUser() == null || currentUserId == null || currentUserId.isBlank()) {
             return false;
         }
 

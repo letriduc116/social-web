@@ -109,6 +109,7 @@ function ProfileActions({
   const [reportSubmitted, setReportSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportError, setReportError] = useState('');
 
   const menuOpen = Boolean(menuAnchor);
   const moreMenuOpen = Boolean(moreMenuAnchor);
@@ -131,6 +132,7 @@ function ProfileActions({
       setSelectedReportReason('');
       setReportSubmitted(false);
       setReportSubmitting(false);
+      setReportError('');
     }
   }, [openReportDialog]);
 
@@ -175,8 +177,12 @@ function ProfileActions({
 
     try {
       setReportSubmitting(true);
+      setReportError('');
       await onReportProfile?.(selectedReportReason);
       setReportSubmitted(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Gửi báo cáo thất bại';
+      setReportError(message);
     } finally {
       setReportSubmitting(false);
     }
@@ -225,8 +231,7 @@ function ProfileActions({
             <CheckCircleOutlineRoundedIcon />
             <Typography className="profile-report-success-title">Cảm ơn bạn đã báo cáo</Typography>
             <Typography className="profile-report-success-desc">
-              Báo cáo trang cá nhân này đã được ghi nhận trên giao diện. Khi có API kiểm duyệt, bạn có thể gửi lý do
-              này về backend.
+              Báo cáo trang cá nhân này đã được gửi đến hệ thống kiểm duyệt.
             </Typography>
             <Button className="profile-primary-btn" fullWidth onClick={() => setOpenReportDialog(false)}>
               Xong
@@ -260,6 +265,10 @@ function ProfileActions({
                 );
               })}
             </Box>
+
+            {reportError ? (
+              <Typography className="profile-report-error">{reportError}</Typography>
+            ) : null}
 
             <Button
               className="profile-primary-btn profile-report-submit"

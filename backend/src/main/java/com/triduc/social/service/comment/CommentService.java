@@ -53,12 +53,18 @@ public class CommentService {
     public CommentResponseDTO addComment(CommentRequestDTO commentRequestDTO){
         User user = userRepository.findById(commentRequestDTO.getSenderId()).orElseThrow(EntityNotFoundException::new);
         Post post = postRepository.findById(commentRequestDTO.getPostId()).orElseThrow(EntityNotFoundException::new);
+        if (post.isHidden()) {
+            throw new AccessDeniedException("Bài viết đã bị ẩn nên không thể bình luận");
+        }
         Comment comment = new Comment();
         comment.setSender(user);
         comment.setPost(post);
         comment.setContent(commentRequestDTO.getContent());
         if(commentRequestDTO.getParentCommentId() != null && !commentRequestDTO.getParentCommentId().trim().isEmpty()){
             Comment commentParent = commentRepository.findById(commentRequestDTO.getParentCommentId()).orElseThrow(EntityNotFoundException::new);
+            if (commentParent.isHidden()) {
+                throw new AccessDeniedException("Bình luận cha đã bị ẩn nên không thể trả lời");
+            }
             comment.setParentComment(commentParent);
         }
         commentRepository.save(comment);
@@ -68,10 +74,13 @@ public class CommentService {
     public CommentResponseDTO modifyComment(String commentId, String content){
         Optional<Comment> comment = commentRepository.findById(commentId);
         if(comment.isEmpty()){
-           throw new EntityNotFoundException();
+            throw new EntityNotFoundException();
         }
 
         Comment curentComment = comment.get();
+        if (curentComment.isHidden()) {
+            throw new AccessDeniedException("Bình luận đã bị ẩn nên không thể chỉnh sửa");
+        }
         curentComment.setContent(content);
         commentRepository.save(curentComment);
         return convertCommentToResponse(curentComment);
@@ -93,7 +102,7 @@ public class CommentService {
     public CommentResponseDTO toggleLike(String commentId, String userId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
-        
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 

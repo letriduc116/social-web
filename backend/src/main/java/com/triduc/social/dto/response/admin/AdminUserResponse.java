@@ -13,4 +13,5 @@ public class AdminUserResponse {
     private String userName;
     private String fullName;
     private String role;
+    private boolean locked;
 }

@@ -22,4 +22,5 @@ public class UserResponse {
     private String bio;
     private LocalDateTime lastSeen;
     private boolean isOnline;
+    private boolean locked;
 }

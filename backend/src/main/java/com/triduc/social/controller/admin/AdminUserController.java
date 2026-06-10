@@ -15,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/admin/users")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
@@ -28,6 +28,7 @@ public class AdminUserController {
     }
 
     @PutMapping("/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<AdminUserResponse>> updateRole(
             @PathVariable String id,
             @RequestBody UpdateUserRoleRequest req
@@ -38,7 +39,22 @@ public class AdminUserController {
         ));
     }
 
+    @PatchMapping("/{id}/lock")
+    public ResponseEntity<ApiResponse<AdminUserResponse>> lock(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(
+                HttpStatus.OK.value(), "Đã khoá tài khoản", adminUserService.lockUser(id)
+        ));
+    }
+
+    @PatchMapping("/{id}/unlock")
+    public ResponseEntity<ApiResponse<AdminUserResponse>> unlock(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(
+                HttpStatus.OK.value(), "Đã mở khoá tài khoản", adminUserService.unlockUser(id)
+        ));
+    }
+
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         adminUserService.deleteUser(id);
         return ResponseEntity.ok(ApiResponse.success(

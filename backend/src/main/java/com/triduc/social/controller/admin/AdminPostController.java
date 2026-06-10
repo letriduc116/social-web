@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/admin/posts")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
 public class AdminPostController {
 
     private final AdminPostService adminPostService;
@@ -41,7 +41,26 @@ public class AdminPostController {
         ));
     }
 
+    @PatchMapping("/{id}/hide")
+    public ResponseEntity<ApiResponse<AdminPostResponse>> hidePost(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(
+                HttpStatus.OK.value(),
+                "Đã ẩn bài viết vi phạm",
+                adminPostService.hidePost(id)
+        ));
+    }
+
+    @PatchMapping("/{id}/unhide")
+    public ResponseEntity<ApiResponse<AdminPostResponse>> unhidePost(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(
+                HttpStatus.OK.value(),
+                "Đã mở hiển thị bài viết",
+                adminPostService.unhidePost(id)
+        ));
+    }
+
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable String id) {
         adminPostService.deletePostByAdmin(id);
 

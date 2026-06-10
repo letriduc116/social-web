@@ -1,4 +1,7 @@
 package com.triduc.social.enums;
 
-public class ReportTargetType {
+public enum ReportTargetType {
+    USER,
+    POST,
+    COMMENT
 }

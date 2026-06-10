@@ -10,6 +10,8 @@ type ApiWrap<T> = {
 
 const API_URL = '/v1/users';
 
+const REPORT_API_URL = '/v1/reports';
+
 const unwrap = <T>(response: ApiWrap<T> | T): T => {
   if (response && typeof response === 'object' && 'data' in response) {
     return response.data as T;
@@ -85,6 +87,53 @@ const uploadCoverImage = async (id: string, file: File): Promise<string> => {
   return unwrap(response);
 };
 
+const normalizeUserReportReason = (reasonId: string): string => {
+  switch (reasonId) {
+    case 'fake_profile':
+      return 'fake_profile';
+    case 'false_information_or_scam':
+      return 'misleading';
+    case 'harassment_or_abuse':
+      return 'abuse';
+    case 'something_else':
+      return 'other';
+    default:
+      return reasonId || 'other';
+  }
+};
+
+const getUserReportDescription = (reasonId: string): string => {
+  switch (reasonId) {
+    case 'fake_profile':
+      return 'Người dùng báo cáo trang cá nhân có dấu hiệu giả mạo.';
+    case 'false_information_or_scam':
+      return 'Người dùng báo cáo tài khoản có dấu hiệu thông tin sai sự thật, lừa đảo hoặc gian lận.';
+    case 'harassment_or_abuse':
+      return 'Người dùng báo cáo tài khoản có hành vi bắt nạt, quấy rối hoặc lạm dụng.';
+    case 'something_else':
+      return 'Người dùng báo cáo tài khoản vì vấn đề khác cần kiểm duyệt.';
+    default:
+      return 'Người dùng báo cáo tài khoản cần kiểm duyệt.';
+  }
+};
+
+const reportUser = async (reportedUserId: string, reasonId: string): Promise<void> => {
+  if (!reportedUserId) {
+    throw new Error('Thiếu userId để gửi báo cáo');
+  }
+
+  const reason = normalizeUserReportReason(reasonId);
+
+  await ApiService.post(`${REPORT_API_URL}/users`, {
+    reportedUserId,
+    userId: reportedUserId,
+    targetUserId: reportedUserId,
+    reason,
+    reasonId: reason,
+    description: getUserReportDescription(reasonId),
+  });
+};
+
 const searchUsers = async (name: string, limit = 20): Promise<UserSearchResult[]> => {
   const keyword = name.trim();
 
@@ -111,4 +160,5 @@ export const userService = {
   uploadProfileImage,
   uploadCoverImage,
   searchUsers,
+  reportUser,
 };

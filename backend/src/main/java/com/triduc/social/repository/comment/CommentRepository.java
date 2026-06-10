@@ -10,11 +10,29 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface CommentRepository extends JpaRepository<Comment, String> {
-    @Query("SELECT c FROM Comment c WHERE c.post.id = :id AND c.parentComment IS NULL order by c.createAt ASC")
+    /**
+     * Dùng cho user thường: chỉ lấy bình luận chưa bị ẩn.
+     */
+    @Query("SELECT c FROM Comment c WHERE c.post.id = :id AND c.parentComment IS NULL AND c.hidden = false ORDER BY c.createAt ASC")
     List<Comment> findParentCommentsByPostId(@Param("id") String postId);
 
-    @Query("SELECT c FROM Comment c WHERE c.parentComment.id = :parentId ORDER BY c.createAt ASC")
+    /**
+     * Dùng cho user thường: chỉ lấy reply chưa bị ẩn.
+     */
+    @Query("SELECT c FROM Comment c WHERE c.parentComment.id = :parentId AND c.hidden = false ORDER BY c.createAt ASC")
     List<Comment> findRepliesByParentId(@Param("parentId") String parentId);
+
+    /**
+     * Dùng cho admin/manager xem chi tiết báo cáo: lấy cả bình luận đã ẩn.
+     */
+    @Query("SELECT c FROM Comment c WHERE c.post.id = :id AND c.parentComment IS NULL ORDER BY c.createAt ASC")
+    List<Comment> findAllParentCommentsByPostIdForAdmin(@Param("id") String postId);
+
+    /**
+     * Dùng cho admin/manager xem chi tiết báo cáo: lấy cả reply đã ẩn.
+     */
+    @Query("SELECT c FROM Comment c WHERE c.parentComment.id = :parentId ORDER BY c.createAt ASC")
+    List<Comment> findAllRepliesByParentIdForAdmin(@Param("parentId") String parentId);
 
     @Query("""
             SELECT c FROM Comment c

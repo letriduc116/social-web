@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AdminCommentsPanel from '../components/admin/AdminCommentsPanel';
 import AdminDashboardPanel from '../components/admin/AdminDashboardPanel';
 import AdminLayout from '../components/admin/AdminLayout';
@@ -7,45 +7,68 @@ import AdminPostsPanel from '../components/admin/AdminPostsPanel';
 import AdminReportedContentPanel from '../components/admin/AdminReportedContentPanel';
 import AdminReportedUsersPanel from '../components/admin/AdminReportedUsersPanel';
 import AdminUsersPanel from '../components/admin/AdminUsersPanel';
+import { authStorage } from '../services/authStorage';
 import type { AdminSection } from '../types/admin';
 import '../styles/admin.css';
 
 const validSections: AdminSection[] = ['dashboard', 'users', 'posts', 'comments', 'reportedUsers', 'reportedContent'];
-
-const getValidSection = (value: string | null): AdminSection => {
-  if (value && validSections.includes(value as AdminSection)) {
-    return value as AdminSection;
-  }
-
-  return 'dashboard';
-};
+const managerSections: AdminSection[] = ['reportedUsers', 'reportedContent'];
 
 function AdminPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [activeSection, setActiveSection] = useState<AdminSection>(() => getValidSection(searchParams.get('tab')));
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const auth = authStorage.getStoredAuth();
+  const role = String(auth?.role || auth?.user?.role || '').toUpperCase();
+  const isManager = role === 'MANAGER';
+
+  const sectionFromQuery = searchParams.get('tab') as AdminSection | null;
+  const initialSection = useMemo<AdminSection>(() => {
+    if (sectionFromQuery && validSections.includes(sectionFromQuery)) {
+      if (isManager && !managerSections.includes(sectionFromQuery)) return 'reportedUsers';
+      return sectionFromQuery;
+    }
+    return isManager ? 'reportedUsers' : 'dashboard';
+  }, [isManager, sectionFromQuery]);
+
+  const [activeSection, setActiveSection] = useState<AdminSection>(initialSection);
+  const [commentPostId, setCommentPostId] = useState('');
 
   useEffect(() => {
-    setActiveSection(getValidSection(searchParams.get('tab')));
-  }, [searchParams]);
+    setActiveSection(initialSection);
+  }, [initialSection]);
 
   const handleChangeSection = (section: AdminSection) => {
-    setActiveSection(section);
-    setSearchParams(section === 'dashboard' ? {} : { tab: section });
+    const nextSection = isManager && !managerSections.includes(section) ? 'reportedUsers' : section;
+    setActiveSection(nextSection);
+    navigate(`/admin?tab=${nextSection}`, { replace: false });
   };
 
-  const handleOpenCommentsByPost = (postId: string) => {
-    setActiveSection('comments');
-    setSearchParams({ tab: 'comments', postId });
+  const openCommentsByPost = (postId: string) => {
+    setCommentPostId(postId);
+    handleChangeSection('comments');
+  };
+
+  const renderPanel = () => {
+    switch (activeSection) {
+      case 'users':
+        return <AdminUsersPanel />;
+      case 'posts':
+        return <AdminPostsPanel onOpenCommentsByPost={openCommentsByPost} />;
+      case 'comments':
+        return <AdminCommentsPanel initialPostId={commentPostId} />;
+      case 'reportedUsers':
+        return <AdminReportedUsersPanel />;
+      case 'reportedContent':
+        return <AdminReportedContentPanel />;
+      case 'dashboard':
+      default:
+        return <AdminDashboardPanel />;
+    }
   };
 
   return (
     <AdminLayout activeSection={activeSection} onChangeSection={handleChangeSection}>
-      {activeSection === 'dashboard' && <AdminDashboardPanel onChangeSection={handleChangeSection} />}
-      {activeSection === 'users' && <AdminUsersPanel />}
-      {activeSection === 'posts' && <AdminPostsPanel onOpenCommentsByPost={handleOpenCommentsByPost} />}
-      {activeSection === 'comments' && <AdminCommentsPanel initialPostId={searchParams.get('postId') || ''} />}
-      {activeSection === 'reportedUsers' && <AdminReportedUsersPanel />}
-      {activeSection === 'reportedContent' && <AdminReportedContentPanel />}
+      {renderPanel()}
     </AdminLayout>
   );
 }

@@ -417,8 +417,14 @@ function ProfilePage() {
   };
 
   const handleReportProfile = async (reasonId: string) => {
-    console.log('Report profile UI only:', { targetUserId, reasonId });
-    setToast('Đã ghi nhận báo cáo trang cá nhân');
+    try {
+      await userService.reportUser(targetUserId, reasonId);
+      setToast('Đã gửi báo cáo trang cá nhân');
+    } catch (err) {
+      console.error(err);
+      setToast(getErrorMessage(err, 'Gửi báo cáo trang cá nhân thất bại'));
+      throw err;
+    }
   };
 
   if (loading) {

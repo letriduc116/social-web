@@ -13,6 +13,7 @@ public class AdminCommentResponse {
     private String id;
     private String content;
     private LocalDateTime createAt;
+    private boolean hidden;
 
     private String senderId;
     private String senderName;

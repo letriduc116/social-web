@@ -11,23 +11,39 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, String> {
-    List<Post> findByUser_Id(String userId);
 
-    List<Post> findByUser_Id(String userId, Sort sort);
+    /**
+     * Dùng cho user thường: chỉ lấy bài chưa bị ẩn.
+     */
+    List<Post> findByUser_IdAndHiddenFalse(String userId);
 
-    List<Post> findByUser_IdNot(String userId, Sort sort);
+    /**
+     * Dùng cho user thường: chỉ lấy bài chưa bị ẩn.
+     */
+    List<Post> findByUser_IdAndHiddenFalse(String userId, Sort sort);
 
+    /**
+     * Dùng cho feed user thường: chỉ lấy bài của người khác và chưa bị ẩn.
+     */
+    List<Post> findByUser_IdNotAndHiddenFalse(String userId, Sort sort);
+
+    /**
+     * Dùng khi xóa bài gốc: vẫn cần lấy cả bài share kể cả đang ẩn.
+     */
     List<Post> findBySharedPost_Id(String sharedPostId);
 
     long countBySharedPost_Id(String sharedPostId);
 
+    /**
+     * Dùng cho admin/manager: xem cả bài đã ẩn.
+     */
     @Query("""
             SELECT p FROM Post p
             WHERE (:keyword IS NULL OR :keyword = ''
-                OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                OR LOWER(p.user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                OR LOWER(p.user.userName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                OR LOWER(p.user.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(p.content, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(p.user.fullName, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(p.user.userName, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(p.user.email, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
             )
             """)
     Page<Post> searchForAdmin(@Param("keyword") String keyword, Pageable pageable);

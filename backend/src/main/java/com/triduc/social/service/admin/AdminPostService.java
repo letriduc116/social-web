@@ -46,6 +46,22 @@ public class AdminPostService {
     }
 
     @Transactional
+    public AdminPostResponse hidePost(String id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy bài viết"));
+        post.setHidden(true);
+        return mapToAdminPostResponse(postRepository.save(post));
+    }
+
+    @Transactional
+    public AdminPostResponse unhidePost(String id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy bài viết"));
+        post.setHidden(false);
+        return mapToAdminPostResponse(postRepository.save(post));
+    }
+
+    @Transactional
     public void deletePostByAdmin(String id) {
         postService.deletePost(id);
     }
@@ -72,6 +88,7 @@ public class AdminPostService {
                 .authorAvatar(post.getUser() != null ? post.getUser().getProfileImage() : null)
 
                 .visibility(post.getVisibility() != null ? post.getVisibility().name() : null)
+                .hidden(post.isHidden())
 
                 .shared(post.getSharedPost() != null)
                 .sharedPostId(post.getSharedPost() != null ? post.getSharedPost().getId() : null)

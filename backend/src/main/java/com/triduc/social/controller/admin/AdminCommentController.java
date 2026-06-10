@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/admin/comments")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
 public class AdminCommentController {
 
     private final AdminCommentService adminCommentService;
@@ -43,7 +43,26 @@ public class AdminCommentController {
         ));
     }
 
+    @PatchMapping("/{id}/hide")
+    public ResponseEntity<ApiResponse<AdminCommentResponse>> hideComment(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(
+                HttpStatus.OK.value(),
+                "Đã ẩn bình luận vi phạm",
+                adminCommentService.hideComment(id)
+        ));
+    }
+
+    @PatchMapping("/{id}/unhide")
+    public ResponseEntity<ApiResponse<AdminCommentResponse>> unhideComment(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(
+                HttpStatus.OK.value(),
+                "Đã mở hiển thị bình luận",
+                adminCommentService.unhideComment(id)
+        ));
+    }
+
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable String id) {
         adminCommentService.deleteCommentByAdmin(id);
 

@@ -36,7 +36,6 @@ const AUTH_WHITELIST = [
   '/v1/auth/send-otp',
   '/v1/auth/verify-otp',
   '/v1/auth/reset-password',
-  '/v1/admin/auth/login',
 ];
 
 api.interceptors.request.use(

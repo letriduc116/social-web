@@ -19,5 +19,6 @@ public class AuthResponse {
     private String profileImage;
     private String coverImage;
     private String role;
+    private boolean locked;
     private String accessToken;
 }

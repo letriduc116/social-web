@@ -6,7 +6,9 @@ import com.triduc.social.enums.Role;
 import com.triduc.social.repository.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -27,6 +29,20 @@ public class AdminUserService {
         return map(user);
     }
 
+    public AdminUserResponse lockUser(String id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
+        user.setLocked(true);
+        return map(userRepository.save(user));
+    }
+
+    public AdminUserResponse unlockUser(String id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
+        user.setLocked(false);
+        return map(userRepository.save(user));
+    }
+
     public void deleteUser(String id) {
         if (!userRepository.existsById(id)) throw new EntityNotFoundException();
         userRepository.deleteById(id);
@@ -39,6 +55,7 @@ public class AdminUserService {
                 .userName(u.getUserName())
                 .fullName(u.getFullName())
                 .role(u.getRole() != null ? u.getRole().name() : null)
+                .locked(u.isLocked())
                 .build();
     }
 }

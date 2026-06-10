@@ -53,6 +53,13 @@ public class Post {
     private PostVisibility visibility = PostVisibility.EVERYONE;
 
     /**
+     * true = bài viết đã bị ẩn bởi admin/manager do vi phạm.
+     * Bài bị ẩn sẽ không xuất hiện ở feed, profile, saved posts.
+     */
+    @Column(nullable = false)
+    private boolean hidden = false;
+
+    /**
      * Nếu bài này là bài share thì sharedPost trỏ về bài viết gốc.
      * Nếu là bài đăng bình thường thì sharedPost = null.
      */

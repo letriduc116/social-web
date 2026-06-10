@@ -362,7 +362,7 @@ public class UserService {
      * - ONLY_ME: chỉ chủ bài viết xem được
      */
     private List<PostProfileResponse> getVisibleProfilePosts(String profileUserId, String currentUserId) {
-        return postRepository.findByUser_Id(profileUserId).stream()
+        return postRepository.findByUser_IdAndHiddenFalse(profileUserId).stream()
                 .filter(post -> canViewPostAndSharedOriginal(post, currentUserId))
                 .map(mapper::toPostResponse)
                 .sorted(Comparator.comparing(PostProfileResponse::getCreatedAt).reversed())
@@ -377,7 +377,7 @@ public class UserService {
     }
 
     private boolean canViewPost(Post post, String currentUserId) {
-        if (post == null || post.getUser() == null || currentUserId == null || currentUserId.isBlank()) {
+        if (post == null || post.isHidden() || post.getUser() == null || currentUserId == null || currentUserId.isBlank()) {
             return false;
         }
 

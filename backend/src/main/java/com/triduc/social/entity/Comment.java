@@ -59,6 +59,13 @@ public class Comment {
     @JsonIgnoreProperties({"comment", "user"})
     private List<CommentLike> likes = new ArrayList<>();
 
+    /**
+     * true = bình luận đã bị ẩn bởi admin/manager do vi phạm.
+     * Bình luận bị ẩn sẽ không hiển thị với user thường.
+     */
+    @Column(nullable = false)
+    private boolean hidden = false;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createAt;
 
