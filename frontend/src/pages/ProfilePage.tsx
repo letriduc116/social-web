@@ -416,6 +416,17 @@ function ProfilePage() {
     setToast('Tính năng nhắn tin có thể nối vào module chat của bạn sau.');
   };
 
+  const handleReportProfile = async (reasonId: string) => {
+    try {
+      await userService.reportUser(targetUserId, reasonId);
+      setToast('Đã gửi báo cáo trang cá nhân');
+    } catch (err) {
+      console.error(err);
+      setToast(getErrorMessage(err, 'Gửi báo cáo trang cá nhân thất bại'));
+      throw err;
+    }
+  };
+
   if (loading) {
     return (
       <div className="ducky-page">
@@ -506,6 +517,7 @@ function ProfilePage() {
                 onUnfriend={handleUnfriend}
                 onEditProfile={() => setOpenEditProfile(true)}
                 onMessage={handleMessage}
+                onReportProfile={handleReportProfile}
               />
             </ProfileHero>
 

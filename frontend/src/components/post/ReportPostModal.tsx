@@ -29,12 +29,12 @@ type ReportPostModalProps = {
 
 const REPORT_REASONS: ReportReason[] = [
   {
-    id: 'spam_or_scam',
+    id: 'spam',
     title: 'Spam, lừa đảo hoặc gian lận',
     description: 'Nội dung có dấu hiệu quảng cáo rác, link lừa đảo hoặc gây hiểu nhầm.',
   },
   {
-    id: 'hate_or_harassment',
+    id: 'harassment',
     title: 'Quấy rối, thù ghét hoặc gây phiền toái',
     description: 'Nội dung công kích, xúc phạm hoặc làm phiền người khác.',
   },
@@ -54,12 +54,14 @@ function ReportPostModal({ open, post, onClose, onSubmit }: ReportPostModalProps
   const [selectedReasonId, setSelectedReasonId] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!open) {
       setSelectedReasonId('');
       setSubmitting(false);
       setSubmitted(false);
+      setError('');
     }
   }, [open]);
 
@@ -68,8 +70,12 @@ function ReportPostModal({ open, post, onClose, onSubmit }: ReportPostModalProps
 
     try {
       setSubmitting(true);
+      setError('');
       await onSubmit?.(selectedReasonId);
       setSubmitted(true);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Không thể gửi báo cáo bài viết';
+      setError(message);
     } finally {
       setSubmitting(false);
     }
@@ -95,7 +101,7 @@ function ReportPostModal({ open, post, onClose, onSubmit }: ReportPostModalProps
             <CheckCircleOutlineOutlinedIcon sx={{ fontSize: 62, color: '#1877f2', mb: 1.2 }} />
             <Typography sx={{ fontSize: 21, fontWeight: 900 }}>Cảm ơn bạn đã báo cáo</Typography>
             <Typography sx={{ color: '#65676b', mt: 1, maxWidth: 420, mx: 'auto' }}>
-              Báo cáo của bạn đã được ghi nhận trên giao diện. Khi có API kiểm duyệt, bạn có thể gửi lý do này về backend.
+              Báo cáo bài viết đã được gửi đến hệ thống kiểm duyệt. Quản trị viên hoặc quản lý sẽ xem xét nội dung này.
             </Typography>
             <Button variant="contained" fullWidth sx={{ mt: 3, borderRadius: '10px', fontWeight: 800 }} onClick={onClose}>
               Xong
@@ -122,7 +128,10 @@ function ReportPostModal({ open, post, onClose, onSubmit }: ReportPostModalProps
                   <button
                     type="button"
                     key={reason.id}
-                    onClick={() => setSelectedReasonId(reason.id)}
+                    onClick={() => {
+                      setSelectedReasonId(reason.id);
+                      setError('');
+                    }}
                     style={{
                       width: '100%',
                       border: active ? '2px solid #1877f2' : '1px solid transparent',
@@ -148,6 +157,12 @@ function ReportPostModal({ open, post, onClose, onSubmit }: ReportPostModalProps
                 );
               })}
             </Box>
+
+            {error ? (
+              <Box sx={{ mt: 1.5, p: 1.2, borderRadius: '10px', bgcolor: '#fee2e2', color: '#991b1b', fontWeight: 700 }}>
+                {error}
+              </Box>
+            ) : null}
 
             <Button
               fullWidth

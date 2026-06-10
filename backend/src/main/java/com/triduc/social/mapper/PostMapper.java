@@ -42,7 +42,9 @@ public class PostMapper {
         }
 
         List<PostImages> images = post.getPostImages() == null ? Collections.emptyList() : post.getPostImages();
-        int commentsCount = post.getComments() == null ? 0 : post.getComments().size();
+        int commentsCount = post.getComments() == null ? 0 : (int) post.getComments().stream()
+                .filter(comment -> !comment.isHidden())
+                .count();
         int likesCount = post.getLikes() == null ? 0 : post.getLikes().size();
 
         boolean isLiked = post.getLikes() != null

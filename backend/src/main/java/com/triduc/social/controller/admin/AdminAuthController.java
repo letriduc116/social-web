@@ -15,7 +15,6 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping("/api/v1/admin/auth")
 @RequiredArgsConstructor
-
 public class AdminAuthController {
 
     private final UserService userService;
@@ -27,8 +26,12 @@ public class AdminAuthController {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Email không tồn tại"));
 
-        if (user.getRole() != Role.ADMIN) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản không có quyền quản trị");
+        if (user.isLocked()) {
+            throw new ResponseStatusException(HttpStatus.LOCKED, "Tài khoản đã bị khoá");
+        }
+
+        if (user.getRole() != Role.ADMIN && user.getRole() != Role.MANAGER) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản không có quyền quản trị hoặc kiểm duyệt");
         }
 
         return ResponseEntity.ok(userService.login(request.getEmail(), request.getPassword(), response));

@@ -98,10 +98,22 @@ public class PostController {
     }
 
     @DeleteMapping
-    public ResponseEntity<ApiResponse<String>> deletePost(@RequestParam("postId") String postId) {
-        postService.deletePost(postId);
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(),
-                "Delete post id =" + postId + " success", null));
+    public ResponseEntity<ApiResponse<String>> deletePost(
+            @RequestParam("postId") String postId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        if (jwt == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Không tìm thấy thông tin xác thực"));
+        }
+
+        postService.deleteMyPost(postId, jwt.getSubject());
+
+        return ResponseEntity.ok(ApiResponse.success(
+                HttpStatus.OK.value(),
+                "Xoá bài viết thành công",
+                null
+        ));
     }
 
     @GetMapping("/saved")

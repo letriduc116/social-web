@@ -23,18 +23,19 @@ public class CommentMapper {
         dto.setContent(comment.getContent());
         dto.setSender(userMapper.toUserResponse(comment.getSender()));
         dto.setCreatedAt(comment.getCreateAt().toString());
-        dto.setUpdatedAt(null); 
-        
+        dto.setUpdatedAt(null);
+
         // Set likes information
         dto.setLikesCount(commentLikeRepository.countLikesByCommentId(comment.getId()));
-        dto.setIsLiked(currentUserId != null && 
-            commentLikeRepository.existsByCommentIdAndUserId(comment.getId(), currentUserId));
+        dto.setIsLiked(currentUserId != null &&
+                commentLikeRepository.existsByCommentIdAndUserId(comment.getId(), currentUserId));
 
         // đệ quy
         if (replies != null) {
             dto.setReplies(replies.stream()
-                .map(reply -> this.mapToDto(reply, reply.getReplies(), currentUserId))
-                .toList());
+                    .filter(reply -> !reply.isHidden())
+                    .map(reply -> this.mapToDto(reply, reply.getReplies(), currentUserId))
+                    .toList());
         }
 
         return dto;

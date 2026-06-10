@@ -16,15 +16,17 @@ import lombok.Setter;
 @Table(name = "users")
 public class User  {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
     private String userName;
     private String fullName;
+
     @Column(nullable = false, unique = true)
     @Email
     private String email;
+
     private String password;
     private String profileImage;
 
@@ -33,74 +35,17 @@ public class User  {
     private String coverImage;
 
     private String bio;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getProfileImage() {
-        return profileImage;
-    }
-
-    public void setProfileImage(String profileImage) {
-        this.profileImage = profileImage;
-    }
-
-    public String getCoverImage() {
-        return coverImage;
-    }
-
-    public void setCoverImage(String coverImage) {
-        this.coverImage = coverImage;
-    }
-
-    public String getBio() {
-        return bio;
-    }
-
-    public void setBio(String bio) {
-        this.bio = bio;
-    }
+    /**
+     * true = tài khoản bị khoá do vi phạm / bị xử lý bởi admin/manager.
+     * Khi locked = true, user không đăng nhập được và token hiện tại cũng bị chặn bởi LockedUserFilter.
+     */
+    @Column(nullable = false)
+    private boolean locked = false;
 
     //Thêm mặc định USER (để user cũ không bị null)
     @PrePersist
