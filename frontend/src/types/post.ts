@@ -68,15 +68,15 @@ export interface LikePostPayload {
 
 export interface SavedPostProfile {
   id: string;
-  content: string;
-  createAt?: string;
-  images: PostImage[];
-  comments: number;
-  likes: number;
-  liked: boolean;
-  savedPost: boolean;
-  user: PostUser;
+  content?: string;
+  createdAt?: string;
+  imageUrls?: PostImage[];
+  likeCount?: number;
+  commentCount?: number;
+  userId: string;
+  userName?: string;
+  avatarUrl?: string;
   visibility?: PostVisibility;
   shared?: boolean;
-  sharedPost?: PostItem | null;
+  sharedPost?: SavedPostProfile | null;
 }

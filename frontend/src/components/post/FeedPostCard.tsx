@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type MouseEvent } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import { Avatar, Box, Button, Divider, Paper, Typography } from '@mui/material';
 import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -48,6 +49,63 @@ function getPostAuthorName(post?: PostItem | null) {
   return post?.user?.fullName || post?.user?.userName || 'Người dùng';
 }
 
+function getProfilePath(userId?: string) {
+  return userId ? `/profile/${userId}` : '/profile';
+}
+
+function stopOpenDetail(event: MouseEvent) {
+  event.stopPropagation();
+}
+
+function renderAuthorAvatar(post?: PostItem | null, size = 40) {
+  const userId = post?.user?.id;
+  const avatar = (
+    <Avatar
+      src={post?.user?.profileImage}
+      sx={{ bgcolor: '#1976d2', width: size, height: size, flexShrink: 0 }}
+    >
+      {getPostAuthorName(post).charAt(0)}
+    </Avatar>
+  );
+
+  if (!userId) return avatar;
+
+  return (
+    <RouterLink
+      to={getProfilePath(userId)}
+      onClick={stopOpenDetail}
+      className="fb-author-avatar-link"
+      aria-label={`Xem trang cá nhân của ${getPostAuthorName(post)}`}
+    >
+      {avatar}
+    </RouterLink>
+  );
+}
+
+function renderAuthorName(post?: PostItem | null, className = 'fb-author-name-link') {
+  const name = getPostAuthorName(post);
+  const userId = post?.user?.id;
+
+  if (!userId) {
+    return (
+      <Typography fontWeight={700} component="span">
+        {name}
+      </Typography>
+    );
+  }
+
+  return (
+    <RouterLink
+      to={getProfilePath(userId)}
+      onClick={stopOpenDetail}
+      className={className}
+      aria-label={`Xem trang cá nhân của ${name}`}
+    >
+      {name}
+    </RouterLink>
+  );
+}
+
 function renderSharedPostPreview(sharedPost?: PostItem | null) {
   if (!sharedPost) return null;
 
@@ -74,12 +132,12 @@ function renderSharedPostPreview(sharedPost?: PostItem | null) {
 
       <Box sx={{ p: 1.5 }}>
         <Box className="fb-post-author" sx={{ mb: 1 }}>
-          <Avatar src={sharedPost.user?.profileImage} sx={{ bgcolor: '#1976d2', width: 36, height: 36 }}>
-            {getPostAuthorName(sharedPost).charAt(0)}
-          </Avatar>
+          {renderAuthorAvatar(sharedPost, 36)}
 
           <Box>
-            <Typography fontWeight={700}>{getPostAuthorName(sharedPost)}</Typography>
+            <Typography fontWeight={700} component="div">
+              {renderAuthorName(sharedPost)}
+            </Typography>
             <Box className="fb-post-meta">
               <span>{formatTime(sharedPost.createAt)}</span>
               {getVisibilityMeta(sharedPost.visibility).icon}
@@ -201,16 +259,17 @@ function FeedPostCard({
       <Paper className="fb-post-card fb-post-card-clickable" elevation={1} onClick={() => onOpenDetail(post)}>
         <Box className="fb-post-header">
           <Box className="fb-post-author">
-            <Avatar src={post.user?.profileImage} sx={{ bgcolor: '#1976d2' }}>
-              {(post.user?.fullName || post.user?.userName || 'U').charAt(0)}
-            </Avatar>
+            {renderAuthorAvatar(post)}
 
             <Box>
-              <Typography fontWeight={700}>{post.user?.fullName || post.user?.userName || 'Người dùng'}</Typography>
+              <Typography fontWeight={700} component="div">
+                {renderAuthorName(post)}
+              </Typography>
 
               {isShare && post.sharedPost ? (
                 <Typography variant="body2" color="text.secondary" sx={{ mt: -0.2 }}>
-                  đã chia sẻ bài viết của {getPostAuthorName(post.sharedPost)}
+                  đã chia sẻ bài viết của{' '}
+                  {renderAuthorName(post.sharedPost, 'fb-author-inline-link')}
                 </Typography>
               ) : null}
 
