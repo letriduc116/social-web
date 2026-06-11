@@ -18,10 +18,11 @@ import ProfileTabs from '../components/profile/ProfileTabs';
 import ProfileTimelineHeader from '../components/profile/ProfileTimelineHeader';
 import ProfileUserListCard from '../components/profile/ProfileUserListCard';
 import SharePostModal from '../components/post/SharePostModal';
+import ProfileFriendsTab from '../components/profile/ProfileFriendsTab';
 
 import type { CreatePostModalPayload, PostItem, SharePostModalPayload } from '../types/post';
 import type { ProfileTabKey, UserProfileResponse } from '../types/user';
-import type { FriendshipStatus, FriendshipStatusResponse } from '../types/friend';
+import type { FriendshipStatus, FriendshipStatusResponse, FriendSummary } from '../types/friend';
 import { authStorage } from '../services/authStorage';
 import { postService } from '../services/postService';
 import { userService } from '../services/userService';
@@ -72,6 +73,8 @@ function ProfilePage() {
   const [coverUploading, setCoverUploading] = useState(false);
   const [friendshipStatus, setFriendshipStatus] = useState<FriendshipStatus>('NONE');
   const [friendRequestId, setFriendRequestId] = useState<string | undefined>();
+  const [friends, setFriends] = useState<FriendSummary[]>([]);
+  const [friendActionLoadingIds, setFriendActionLoadingIds] = useState<string[]>([]);
 
   const currentUserId = authStorage.getCurrentUserId();
   const currentUserName = authStorage.getCurrentUserName();
@@ -125,7 +128,7 @@ function ProfilePage() {
       setLoading(true);
       setError('');
 
-      const [profileRes, followersRes, followingRes, userPosts, friendshipStatusRes] = await Promise.all([
+      const [profileRes, followersRes, followingRes, userPosts, friendshipStatusRes, friendsRes] = await Promise.all([
         userService.getProfile(targetUserId),
         userService.getFollowers(targetUserId),
         userService.getFollowing(targetUserId),
@@ -138,9 +141,11 @@ function ProfilePage() {
               following: false,
             } satisfies FriendshipStatusResponse)
           : friendService.getFriendshipStatus(targetUserId),
+        friendService.getFriends(targetUserId).catch(() => []),
       ]);
 
       setPosts(userPosts || []);
+
       setProfile({
         ...profileRes,
         isFollowing: isOwner ? profileRes.isFollowing : Boolean(friendshipStatusRes.following),
@@ -149,6 +154,8 @@ function ProfilePage() {
         postCount: userPosts?.length || 0,
         posts: [],
       });
+
+      setFriends(friendsRes || []);
       setFriendshipStatus(friendshipStatusRes.status);
       setFriendRequestId(friendshipStatusRes.requestId);
     } catch (err) {
@@ -412,6 +419,58 @@ function ProfilePage() {
     }
   };
 
+  const setFriendActionLoading = (friendId: string, loading: boolean) => {
+    setFriendActionLoadingIds((prev) => (loading ? [...prev, friendId] : prev.filter((id) => id !== friendId)));
+  };
+
+  const handleUnfollowFriendInList = async (friend: FriendSummary) => {
+    try {
+      setFriendActionLoading(friend.id, true);
+      await friendService.unfollowFriend(friend.id);
+
+      setFriends((prev) => prev.map((item) => (item.id === friend.id ? { ...item, following: false } : item)));
+
+      setToast(`Đã bỏ theo dõi ${friend.fullName || friend.userName || 'người này'}`);
+    } catch (err) {
+      console.error(err);
+      setToast(getErrorMessage(err, 'Không thể bỏ theo dõi'));
+    } finally {
+      setFriendActionLoading(friend.id, false);
+    }
+  };
+
+  const handleFollowFriendAgainInList = async (friend: FriendSummary) => {
+    try {
+      setFriendActionLoading(friend.id, true);
+      await friendService.followFriendAgain(friend.id);
+
+      setFriends((prev) => prev.map((item) => (item.id === friend.id ? { ...item, following: true } : item)));
+
+      setToast(`Đã theo dõi lại ${friend.fullName || friend.userName || 'người này'}`);
+    } catch (err) {
+      console.error(err);
+      setToast(getErrorMessage(err, 'Không thể theo dõi lại'));
+    } finally {
+      setFriendActionLoading(friend.id, false);
+    }
+  };
+
+  const handleUnfriendInList = async (friend: FriendSummary) => {
+    try {
+      setFriendActionLoading(friend.id, true);
+      await friendService.unfriend(friend.id);
+
+      setFriends((prev) => prev.filter((item) => item.id !== friend.id));
+
+      setToast(`Đã hủy kết bạn với ${friend.fullName || friend.userName || 'người này'}`);
+    } catch (err) {
+      console.error(err);
+      setToast(getErrorMessage(err, 'Không thể hủy kết bạn'));
+    } finally {
+      setFriendActionLoading(friend.id, false);
+    }
+  };
+
   const handleMessage = () => {
     setToast('Tính năng nhắn tin có thể nối vào module chat của bạn sau.');
   };
@@ -452,6 +511,19 @@ function ProfilePage() {
   }
 
   const renderRightColumn = () => {
+    if (activeTab === 'friends') {
+      return (
+        <ProfileFriendsTab
+          friends={friends}
+          isOwner={isOwner}
+          actionLoadingIds={friendActionLoadingIds}
+          onUnfollowFriend={handleUnfollowFriendInList}
+          onFollowFriendAgain={handleFollowFriendAgainInList}
+          onUnfriend={handleUnfriendInList}
+        />
+      );
+    }
+
     if (activeTab === 'followers') {
       return <ProfileUserListCard title="Người theo dõi" users={profileData.followers || []} />;
     }
@@ -469,6 +541,7 @@ function ProfilePage() {
     return (
       <>
         <ProfilePostComposer profile={profileData} isOwner={isOwner} onOpenCreatePost={() => setOpenCreatePost(true)} />
+
         <ProfileTimelineHeader isOwner={isOwner} />
 
         {posts.length === 0 ? (
@@ -521,7 +594,7 @@ function ProfilePage() {
               />
             </ProfileHero>
 
-            <ProfileStats profile={profileData} onSelectTab={setActiveTab} />
+            <ProfileStats profile={profileData} friendCount={friends.length} onSelectTab={setActiveTab} />
             <ProfileTabs activeTab={activeTab} onChange={setActiveTab} />
           </Box>
         </Container>
@@ -533,11 +606,16 @@ function ProfilePage() {
             <ProfileAboutCard profile={profileData} isOwner={isOwner} onEditProfile={() => setOpenEditProfile(true)} />
             <ProfilePhotosCard posts={posts} />
             <ProfileUserListCard
-              title={isOwner ? 'Người theo dõi' : 'Một số người theo dõi'}
-              users={profileData.followers || []}
+              title={isOwner ? 'Bạn bè' : 'Một số bạn bè'}
+              users={friends.map((friend) => ({
+                id: friend.id,
+                fullName: friend.fullName,
+                userName: friend.userName,
+                profileImage: friend.profileImage || friend.avatarUrl,
+              }))}
               compact
               maxItems={6}
-              onViewAll={() => setActiveTab('followers')}
+              onViewAll={() => setActiveTab('friends')}
             />
           </Box>
 

@@ -10,6 +10,7 @@ type Props = {
 const tabs: { key: ProfileTabKey; label: string }[] = [
   { key: 'posts', label: 'Bài viết' },
   { key: 'about', label: 'Giới thiệu' },
+  { key: 'friends', label: 'Bạn bè' },
   { key: 'followers', label: 'Người theo dõi' },
   { key: 'following', label: 'Đang theo dõi' },
 ];

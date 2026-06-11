@@ -48,4 +48,18 @@ public interface FriendRequestRepository extends JpaRepository<FriendRequest, St
             @Param("userBId") String userBId,
             @Param("status") FriendRequestStatus status
     );
+
+    @Query("""
+    SELECT fr FROM FriendRequest fr
+    WHERE fr.status = :status
+      AND (
+        fr.requester.id = :userId
+        OR fr.receiver.id = :userId
+      )
+    ORDER BY fr.updatedAt DESC, fr.createdAt DESC
+    """)
+    List<FriendRequest> findFriendsByUserIdAndStatus(
+            @Param("userId") String userId,
+            @Param("status") FriendRequestStatus status
+    );
 }

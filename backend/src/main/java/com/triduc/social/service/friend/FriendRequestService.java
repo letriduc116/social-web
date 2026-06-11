@@ -1,6 +1,7 @@
 package com.triduc.social.service.friend;
 
 import com.triduc.social.dto.response.friend.FriendRequestResponse;
+import com.triduc.social.dto.response.friend.FriendSummaryResponse;
 import com.triduc.social.dto.response.friend.FriendshipStatusResponse;
 import com.triduc.social.entity.FriendRequest;
 import com.triduc.social.entity.User;
@@ -328,6 +329,17 @@ public class FriendRequestService {
                 .build();
     }
 
+    public List<FriendSummaryResponse> getFriends(String currentUserId, String profileUserId) {
+        userRepository.findById(profileUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại"));
+
+        return friendRequestRepository
+                .findFriendsByUserIdAndStatus(profileUserId, FriendRequestStatus.ACCEPTED)
+                .stream()
+                .map(request -> toFriendSummaryResponse(request, profileUserId, currentUserId))
+                .toList();
+    }
+
     private boolean isFriend(String userAId, String userBId) {
         return getAcceptedFriendRequest(userAId, userBId).isPresent();
     }
@@ -337,6 +349,29 @@ public class FriendRequestService {
                 .findBetweenUsersByStatus(userAId, userBId, FriendRequestStatus.ACCEPTED)
                 .stream()
                 .findFirst();
+    }
+
+    private FriendSummaryResponse toFriendSummaryResponse(
+            FriendRequest request,
+            String profileUserId,
+            String currentUserId
+    ) {
+        User requester = request.getRequester();
+        User receiver = request.getReceiver();
+
+        User friend = requester.getId().equals(profileUserId) ? receiver : requester;
+
+        boolean following = followRepository.countByUserIdAndFollowerId(friend.getId(), currentUserId) > 0;
+
+        return FriendSummaryResponse.builder()
+                .id(friend.getId())
+                .userName(friend.getUserName())
+                .fullName(friend.getFullName())
+                .profileImage(friend.getProfileImage())
+                .avatarUrl(friend.getProfileImage())
+                .following(following)
+                .mutualFriendsCount(0)
+                .build();
     }
 
     private FriendRequestResponse toResponse(FriendRequest request) {

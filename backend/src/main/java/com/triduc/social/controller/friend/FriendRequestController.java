@@ -4,6 +4,7 @@ import com.triduc.social.dto.ApiResponse;
 import com.triduc.social.dto.response.friend.FriendRequestResponse;
 import com.triduc.social.dto.response.friend.FriendshipStatusResponse;
 import com.triduc.social.service.friend.FriendRequestService;
+import com.triduc.social.dto.response.friend.FriendSummaryResponse;
 import com.triduc.social.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,21 @@ public class FriendRequestController {
 
     private final FriendRequestService friendRequestService;
     private final UserService userService;
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<FriendSummaryResponse>>> getFriends(
+            @RequestParam(required = false) String userId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        String currentUserId = getCurrentUserId(jwt);
+        String profileUserId = userId == null || userId.isBlank() ? currentUserId : userId;
+
+        List<FriendSummaryResponse> response = friendRequestService.getFriends(currentUserId, profileUserId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(HttpStatus.OK.value(), null, response)
+        );
+    }
 
     @PostMapping("/requests")
     public ResponseEntity<ApiResponse<FriendRequestResponse>> sendRequest(
