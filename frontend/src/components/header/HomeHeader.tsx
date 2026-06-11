@@ -26,7 +26,7 @@ import '../../styles/header.css';
 import '../../styles/menus.css';
 
 const navItems = [
-  { key: 'home', label: 'Trang chủ', icon: <HomeOutlinedIcon />, path: '/' },
+  { key: 'home', label: 'Trang chủ', icon: <HomeOutlinedIcon />, path: '/home' },
   { key: 'friends', label: 'Bạn bè', icon: <GroupsOutlinedIcon />, path: '/friends' },
   { key: 'videos', label: 'Video', icon: <OndemandVideoOutlinedIcon /> },
   { key: 'groups', label: 'Nhóm', icon: <GroupsOutlinedIcon /> },
@@ -56,7 +56,6 @@ function HomeHeader() {
   const navigate = useNavigate();
   const location = useLocation();
   const headerRef = useRef<HTMLDivElement | null>(null);
-
 
   const syncReceivedRequestCount = async () => {
     try {
@@ -273,7 +272,7 @@ function HomeHeader() {
       <AppBar position="sticky" color="inherit" elevation={1} className="fb-header-appbar">
         <Toolbar className="fb-header-toolbar" ref={headerRef}>
           <Box className="fb-header-left">
-            <Box className="fb-brand" component="a" href="/">
+            <Box className="fb-brand" component="button" type="button" onClick={() => navigate('/home')}>
               <Box className="fb-brand-logo">
                 <SmartToyOutlinedIcon />
               </Box>
@@ -287,7 +286,7 @@ function HomeHeader() {
             {navItems.map((item) => {
               const isActive =
                 item.key === 'home'
-                  ? location.pathname === '/'
+                  ? location.pathname === '/home'
                   : 'path' in item && item.path
                     ? location.pathname.startsWith(item.path)
                     : false;

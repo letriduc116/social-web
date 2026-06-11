@@ -1,5 +1,5 @@
 import { useEffect, useState, type MouseEvent } from 'react';
-import { Alert, Box, Button, CircularProgress, Divider, Paper, Skeleton, Typography } from '@mui/material';
+import { Alert, Box, Button, Divider, Paper, Skeleton, Typography } from '@mui/material';
 import BookmarkAddedOutlinedIcon from '@mui/icons-material/BookmarkAddedOutlined';
 import CollectionsBookmarkOutlinedIcon from '@mui/icons-material/CollectionsBookmarkOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
@@ -257,7 +257,7 @@ function SavedPostsPage() {
               <Button
                 variant="contained"
                 startIcon={<HomeOutlinedIcon />}
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/home')}
                 className="saved-posts-action-btn"
               >
                 Bảng tin

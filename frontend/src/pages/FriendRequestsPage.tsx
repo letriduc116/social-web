@@ -232,7 +232,7 @@ function FriendRequestsPage() {
               <Typography className="friends-empty-desc">
                 Khi ai đó gửi lời mời kết bạn, lời mời sẽ hiển thị ở trang này để bạn chấp nhận hoặc xóa.
               </Typography>
-              <Button variant="contained" onClick={() => navigate('/')} className="friends-empty-button">
+              <Button variant="contained" onClick={() => navigate('/home')} className="friends-empty-button">
                 Quay về bảng tin
               </Button>
             </Paper>

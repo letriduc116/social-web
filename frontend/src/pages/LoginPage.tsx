@@ -43,12 +43,14 @@ function LoginPage() {
         return;
       }
 
-      setSuccess(`Chào mừng bạn quay lại ${res.fullName || res.userName || (role === 'MANAGER' ? 'Manager' : 'Ducky')}!`);
+      setSuccess(
+        `Chào mừng bạn quay lại ${res.fullName || res.userName || (role === 'MANAGER' ? 'Manager' : 'Ducky')}!`,
+      );
       setTimeout(() => {
         if (isAdminLogin || isAdminOrManager) {
           navigate(role === 'MANAGER' ? '/admin?tab=reportedUsers' : '/admin', { replace: true });
         } else {
-          navigate('/', { replace: true });
+          navigate('/home', { replace: true });
         }
       }, 500);
     } catch (err) {
@@ -76,12 +78,26 @@ function LoginPage() {
         <div className="auth-card">
           <h2>{isAdminLogin ? 'Đăng nhập quản trị' : 'Đăng nhập'}</h2>
           <p className="auth-subtitle">
-            {isAdminLogin ? 'Sử dụng tài khoản ADMIN hoặc MANAGER để truy cập khu vực quản trị' : 'Đăng nhập vào tài khoản Ducky của bạn'}
+            {isAdminLogin
+              ? 'Sử dụng tài khoản ADMIN hoặc MANAGER để truy cập khu vực quản trị'
+              : 'Đăng nhập vào tài khoản Ducky của bạn'}
           </p>
 
           <form onSubmit={handleSubmit} className="auth-form">
             <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} />
-            <input type="password" name="password" placeholder="Mật khẩu" value={form.password} onChange={handleChange} />
+            <input
+              type="password"
+              name="password"
+              placeholder="Mật khẩu"
+              value={form.password}
+              onChange={handleChange}
+            />
+            {!isAdminLogin && (
+              <div className="auth-help-row">
+                <Link to="/forgot-password">Quên mật khẩu?</Link>
+              </div>
+            )}
+
             {error && <div className="auth-message error">{error}</div>}
             {success && <div className="auth-message success">{success}</div>}
             <button type="submit" className="auth-btn primary" disabled={loading}>
@@ -91,11 +107,17 @@ function LoginPage() {
 
           {!isAdminLogin ? (
             <>
-              <div className="auth-divider"><span>hoặc</span></div>
-              <Link to="/register" className="auth-btn secondary link-btn">Tạo tài khoản mới</Link>
+              <div className="auth-divider">
+                <span>hoặc</span>
+              </div>
+              <Link to="/register" className="auth-btn secondary link-btn">
+                Tạo tài khoản mới
+              </Link>
             </>
           ) : (
-            <div className="auth-footer-text admin-auth-footer">Muốn dùng tài khoản thường? <Link to="/login">Quay lại đăng nhập người dùng</Link></div>
+            <div className="auth-footer-text admin-auth-footer">
+              Muốn dùng tài khoản thường? <Link to="/login">Quay lại đăng nhập người dùng</Link>
+            </div>
           )}
         </div>
       </div>

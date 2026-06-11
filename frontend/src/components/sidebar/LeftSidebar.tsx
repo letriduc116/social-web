@@ -16,7 +16,7 @@ type QuickLink = {
 };
 
 const quickLinks: QuickLink[] = [
-  { label: 'Trang chủ', path: '/', icon: <HomeOutlinedIcon /> },
+  { label: 'Trang chủ', path: '/home', icon: <HomeOutlinedIcon /> },
   { label: 'Trang cá nhân', path: '/profile', icon: <PersonOutlineOutlinedIcon /> },
   { label: 'Bạn bè', path: '/search/people', icon: <PeopleAltOutlinedIcon /> },
   { label: 'Kỷ niệm', icon: <HistoryOutlinedIcon /> },

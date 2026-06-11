@@ -264,3 +264,53 @@
 .admin-auth-footer a:hover {
   text-decoration: underline;
 }
+
+.auth-help-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -6px;
+  margin-bottom: 2px;
+}
+
+.auth-help-row a {
+  color: #1877f2;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-help-row a:hover {
+  text-decoration: underline;
+}
+
+.auth-text-btn {
+  border: none;
+  background: transparent;
+  color: #1877f2;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 0;
+  width: fit-content;
+  align-self: center;
+}
+
+.auth-text-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.auth-text-btn:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.auth-form input:disabled {
+  background: #eef2f7;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.auth-full-btn {
+  width: 100%;
+  margin-top: 16px;
+}
