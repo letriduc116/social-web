@@ -30,6 +30,19 @@ public class AuthController {
 		}
 	}
 
+	@PostMapping("/google")
+	public ResponseEntity<AuthResponse> loginWithGoogle(
+			@RequestBody GoogleLoginRequest request,
+			HttpServletResponse servletResponse
+	) {
+		AuthResponse authResponse = userService.loginWithGoogle(
+				request.getCredential(),
+				servletResponse
+		);
+
+		return ResponseEntity.ok(authResponse);
+	}
+
 	@PostMapping("/register")
 	@ResponseStatus(HttpStatus.CREATED) 
 	public ResponseEntity<?> register(@RequestBody RegisterRequest request, HttpServletResponse servletResponse) {

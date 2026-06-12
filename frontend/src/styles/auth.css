@@ -314,3 +314,34 @@
   width: 100%;
   margin-top: 16px;
 }
+
+/* GOOGLE LOGIN */
+.auth-social-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.google-login-wrap {
+  width: 100%;
+  max-width: 366px;
+  display: flex;
+  justify-content: center;
+}
+
+.google-login-wrap > div {
+  width: 100% !important;
+}
+
+.auth-register-btn {
+  width: 100%;
+  max-width: 366px;
+  height: 44px;
+  border-radius: 999px;
+  padding: 0 18px;
+  margin: 0 auto;
+}
+
+/* END GOOGLE LOGIN */

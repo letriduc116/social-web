@@ -22,6 +22,10 @@ import com.triduc.social.service.jwt.JwtService;
 import com.triduc.social.service.story.StoryService;
 import com.triduc.social.enums.FriendRequestStatus;
 import com.triduc.social.repository.friend.FriendRequestRepository;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import java.util.UUID;
 import com.triduc.social.utils.JwtUtil;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.Cookie;
@@ -57,6 +61,7 @@ public class UserService {
     private final FriendRequestRepository friendRequestRepository;
     private final FileService fileService;
     private final StoryService storyService;
+    private final GoogleTokenService googleTokenService;
 
     public AuthResponse login(String email, String password, HttpServletResponse response) {
         Authentication authenticationRequest = UsernamePasswordAuthenticationToken.unauthenticated(email, password);
@@ -80,6 +85,101 @@ public class UserService {
 //                .orElseThrow(EntityNotFoundException::new);
 
         return mapper.toAuthResponse(user, accessToken);
+    }
+
+    @Transactional
+    public AuthResponse loginWithGoogle(String credential, HttpServletResponse response) {
+        GoogleIdToken.Payload payload = googleTokenService.verify(credential);
+
+        String email = payload.getEmail();
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không lấy được email từ Google");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseGet(() -> createGoogleUser(payload));
+
+        // Login Google bỏ qua AuthenticationManager, nên phải tự check locked.
+        if (user.isLocked()) {
+            throw new ResponseStatusException(HttpStatus.LOCKED, "Tài khoản đã bị khoá do vi phạm.");
+        }
+
+        String roleName = getRoleName(user);
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                user.getEmail(),
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_" + roleName))
+        );
+
+        String accessToken = jwtService.createAccessToken(authentication, roleName);
+        String refreshToken = jwtService.createRefreshToken(authentication);
+
+        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(true);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60);
+        refreshTokenCookie.setAttribute("SameSite", "Strict");
+        response.addCookie(refreshTokenCookie);
+
+        return mapper.toAuthResponse(user, accessToken);
+    }
+
+    private User createGoogleUser(GoogleIdToken.Payload payload) {
+        String email = payload.getEmail();
+
+        String fullName = stringValue(payload.get("name"));
+        String picture = stringValue(payload.get("picture"));
+
+        if (fullName.isBlank()) {
+            fullName = getEmailLocalPart(email);
+        }
+
+        User user = new User();
+        user.setEmail(email);
+        user.setFullName(fullName);
+        user.setUserName(generateUserNameFromEmail(email));
+        user.setProfileImage(picture.isBlank() ? null : picture);
+        user.setRole(Role.USER);
+
+        // User đăng nhập Google không cần mật khẩu thật.
+        // Set random password để tránh lỗi nếu password null.
+        user.setPassword(passwordEncoder.encode("GOOGLE_LOGIN_" + UUID.randomUUID()));
+
+        return userRepository.save(user);
+    }
+
+    private String getRoleName(User user) {
+        return user.getRole() == null ? Role.USER.name() : user.getRole().name();
+    }
+
+    private String generateUserNameFromEmail(String email) {
+        String base = getEmailLocalPart(email)
+                .replaceAll("[^a-zA-Z0-9_]", "");
+
+        if (base.isBlank()) {
+            base = "google_user";
+        }
+
+        String candidate = base;
+        int suffix = 1;
+
+        while (userRepository.findByUserName(candidate).isPresent()) {
+            candidate = base + suffix;
+            suffix++;
+        }
+
+        return candidate;
+    }
+
+    private String getEmailLocalPart(String email) {
+        int atIndex = email.indexOf("@");
+        return atIndex > 0 ? email.substring(0, atIndex) : email;
+    }
+
+    private String stringValue(Object value) {
+        return value == null ? "" : value.toString().trim();
     }
 
     public UserResponse findById(String userId){

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
+import type { CredentialResponse } from '@react-oauth/google';
 import { authService } from '../services/authService';
 import { adminService } from '../services/adminService';
 import type { LoginProps } from '../types/auth';
@@ -60,6 +62,44 @@ function LoginPage() {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    setError('');
+    setSuccess('');
+
+    const credential = credentialResponse.credential;
+
+    if (!credential) {
+      setError('Không lấy được thông tin đăng nhập từ Google');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await authService.loginWithGoogle({ credential });
+      const role = getRole(res);
+      const isAdminOrManager = role === 'ADMIN' || role === 'MANAGER';
+
+      setSuccess(`Chào mừng bạn ${res.fullName || res.userName || 'Ducky'}!`);
+
+      setTimeout(() => {
+        if (isAdminOrManager) {
+          navigate(role === 'MANAGER' ? '/admin?tab=reportedUsers' : '/admin', { replace: true });
+        } else {
+          navigate('/home', { replace: true });
+        }
+      }, 500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Đăng nhập Google thất bại');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError('Đăng nhập Google thất bại hoặc đã bị huỷ');
+  };
+
   return (
     <div className={`auth-page ${isAdminLogin ? 'admin-auth-page' : ''}`}>
       <div className="auth-left">
@@ -110,9 +150,24 @@ function LoginPage() {
               <div className="auth-divider">
                 <span>hoặc</span>
               </div>
-              <Link to="/register" className="auth-btn secondary link-btn">
-                Tạo tài khoản mới
-              </Link>
+
+              <div className="auth-social-actions">
+                <div className="google-login-wrap">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    theme="outline"
+                    size="large"
+                    shape="pill"
+                    text="signin_with"
+                    width="366"
+                  />
+                </div>
+
+                <Link to="/register" className="auth-btn secondary link-btn auth-register-btn">
+                  Tạo tài khoản mới
+                </Link>
+              </div>
             </>
           ) : (
             <div className="auth-footer-text admin-auth-footer">

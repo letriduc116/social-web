@@ -3,6 +3,10 @@ export interface LoginProps {
   password: string;
 }
 
+export interface GoogleLoginProps {
+  credential: string;
+}
+
 export interface RegisterProps {
   email: string;
   password: string;
