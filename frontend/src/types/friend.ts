@@ -25,3 +25,13 @@ export interface FriendshipStatusResponse {
   requestId?: string;
   following: boolean;
 }
+
+export type FriendSummary = {
+  id: string;
+  userName?: string;
+  fullName?: string;
+  profileImage?: string;
+  avatarUrl?: string;
+  mutualFriendsCount?: number;
+  following?: boolean;
+};

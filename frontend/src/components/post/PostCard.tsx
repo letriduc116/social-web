@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import { Avatar, Box, Button, Divider, Paper, Typography } from '@mui/material';
 import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -40,6 +41,20 @@ function getVisibilityIcon(visibility?: PostVisibility) {
 
 function getPostAuthorName(post?: ProfilePost | null) {
   return post?.userName || 'Người dùng';
+}
+
+function getProfilePath(userId?: string) {
+  return userId ? `/profile/${userId}` : '/profile';
+}
+
+function renderAuthorName(userId?: string, name = 'Người dùng', className = 'fb-author-name-link') {
+  if (!userId) return name;
+
+  return (
+    <RouterLink to={getProfilePath(userId)} className={className} aria-label={`Xem trang cá nhân của ${name}`}>
+      {name}
+    </RouterLink>
+  );
 }
 
 function profilePostToPostItem(post: ProfilePost): PostItem {
@@ -149,15 +164,24 @@ function PostCard({ post }: Props) {
       <Paper className="fb-post-card" elevation={1}>
         <Box className="fb-post-header">
           <Box className="fb-post-author">
-            <Avatar src={localPost.user?.profileImage} sx={{ bgcolor: '#1976d2' }}>
-              {localPost.user?.userName?.charAt(0) || 'U'}
-            </Avatar>
+            <RouterLink
+              to={getProfilePath(localPost.user?.id)}
+              className="fb-author-avatar-link"
+              aria-label={`Xem trang cá nhân của ${localPost.user?.userName || 'Người dùng'}`}
+            >
+              <Avatar src={localPost.user?.profileImage} sx={{ bgcolor: '#1976d2' }}>
+                {localPost.user?.userName?.charAt(0) || 'U'}
+              </Avatar>
+            </RouterLink>
 
             <Box>
-              <Typography fontWeight={700}>{localPost.user?.userName || 'Người dùng'}</Typography>
+              <Typography fontWeight={700} component="div">
+                {renderAuthorName(localPost.user?.id, localPost.user?.userName || 'Người dùng')}
+              </Typography>
               {localPost.shared && post.sharedPost ? (
                 <Typography variant="body2" color="text.secondary" sx={{ mt: -0.2 }}>
-                  đã chia sẻ bài viết của {getPostAuthorName(post.sharedPost)}
+                  đã chia sẻ bài viết của{' '}
+                  {renderAuthorName(post.sharedPost.userId, getPostAuthorName(post.sharedPost), 'fb-author-inline-link')}
                 </Typography>
               ) : null}
               <Box className="fb-post-meta">
@@ -204,7 +228,9 @@ function PostCard({ post }: Props) {
             ) : null}
 
             <Box sx={{ p: 1.5 }}>
-              <Typography fontWeight={700}>{getPostAuthorName(post.sharedPost)}</Typography>
+              <Typography fontWeight={700} component="div">
+                {renderAuthorName(post.sharedPost.userId, getPostAuthorName(post.sharedPost))}
+              </Typography>
               {post.sharedPost.content ? <Typography className="fb-post-content">{post.sharedPost.content}</Typography> : null}
             </Box>
           </Box>

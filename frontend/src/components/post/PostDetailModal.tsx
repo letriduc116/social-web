@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { MouseEvent } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Avatar,
   Box,
@@ -92,7 +93,70 @@ function getPostAuthorName(post?: PostItem | null) {
   return post?.user?.fullName || post?.user?.userName || 'Người dùng';
 }
 
-function renderSharedPostPreview(sharedPost?: PostItem | null) {
+function getProfilePath(userId?: string) {
+  return userId ? `/profile/${userId}` : '/profile';
+}
+
+function renderAuthorAvatar(post?: PostItem | null, onNavigate?: () => void, size = 40) {
+  const userId = post?.user?.id;
+  const avatar = (
+    <Avatar
+      src={post?.user?.profileImage}
+      sx={{ bgcolor: '#1976d2', width: size, height: size, flexShrink: 0 }}
+    >
+      {getPostAuthorName(post).charAt(0)}
+    </Avatar>
+  );
+
+  if (!userId) return avatar;
+
+  return (
+    <RouterLink
+      to={getProfilePath(userId)}
+      onClick={(event) => {
+        event.stopPropagation();
+        onNavigate?.();
+      }}
+      className="fb-author-avatar-link"
+      aria-label={`Xem trang cá nhân của ${getPostAuthorName(post)}`}
+    >
+      {avatar}
+    </RouterLink>
+  );
+}
+
+function renderAuthorName(
+  post?: PostItem | null,
+  onNavigate?: () => void,
+  className = 'fb-author-name-link',
+) {
+  const name = getPostAuthorName(post);
+  const userId = post?.user?.id;
+
+  if (!userId) {
+    return (
+      <Typography fontWeight={700} component="span">
+        {name}
+      </Typography>
+    );
+  }
+
+  return (
+    <RouterLink
+      to={getProfilePath(userId)}
+      onClick={(event) => {
+        event.stopPropagation();
+        onNavigate?.();
+      }}
+      className={className}
+      aria-label={`Xem trang cá nhân của ${name}`}
+    >
+      {name}
+    </RouterLink>
+  );
+}
+
+function renderSharedPostPreview(sharedPost?: PostItem | null, onNavigate?: () => void) {
   if (!sharedPost) return null;
 
   return (
@@ -118,12 +182,12 @@ function renderSharedPostPreview(sharedPost?: PostItem | null) {
 
       <Box sx={{ p: 1.5 }}>
         <Box className="fb-post-author" sx={{ mb: 1 }}>
-          <Avatar src={sharedPost.user?.profileImage} sx={{ bgcolor: '#1976d2', width: 36, height: 36 }}>
-            {getPostAuthorName(sharedPost).charAt(0)}
-          </Avatar>
+          {renderAuthorAvatar(sharedPost, onNavigate, 36)}
 
           <Box>
-            <Typography fontWeight={700}>{getPostAuthorName(sharedPost)}</Typography>
+            <Typography fontWeight={700} component="div">
+              {renderAuthorName(sharedPost, onNavigate)}
+            </Typography>
             <Box className="fb-post-meta">
               <span>{formatTime(sharedPost.createAt)}</span>
               {getVisibilityMeta(sharedPost.visibility).icon}
@@ -624,15 +688,16 @@ function PostDetailModal({
           <Box className="fb-post-detail-scroll">
             <Box className="fb-post-header">
               <Box className="fb-post-author">
-                <Avatar src={post.user?.profileImage} sx={{ bgcolor: '#1976d2' }}>
-                  {(post.user?.fullName || post.user?.userName || 'U').charAt(0)}
-                </Avatar>
+                {renderAuthorAvatar(post, onClose)}
 
                 <Box>
-                  <Typography fontWeight={700}>{post.user?.fullName || post.user?.userName || 'Người dùng'}</Typography>
+                  <Typography fontWeight={700} component="div">
+                    {renderAuthorName(post, onClose)}
+                  </Typography>
                   {isShare && post.sharedPost ? (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: -0.2 }}>
-                      đã chia sẻ bài viết của {getPostAuthorName(post.sharedPost)}
+                      đã chia sẻ bài viết của{' '}
+                      {renderAuthorName(post.sharedPost, onClose, 'fb-author-inline-link')}
                     </Typography>
                   ) : null}
                   <Box className="fb-post-meta">
@@ -666,7 +731,7 @@ function PostDetailModal({
               </Box>
             )}
 
-            {post.sharedPost ? renderSharedPostPreview(post.sharedPost) : null}
+            {post.sharedPost ? renderSharedPostPreview(post.sharedPost, onClose) : null}
 
             <Box className="fb-post-detail-stats-row">
               <Box className="fb-post-detail-stats-left">

@@ -31,6 +31,7 @@ const api: AxiosInstance = axios.create({
 // Danh sách các endpoint liên quan đến xác thực mà không cần token
 const AUTH_WHITELIST = [
   '/v1/auth/login',
+  '/v1/auth/google',
   '/v1/auth/register',
   '/v1/auth/check-email',
   '/v1/auth/send-otp',

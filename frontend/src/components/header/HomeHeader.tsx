@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AppBar, Toolbar, Box, IconButton, Tooltip, Avatar, Badge, Snackbar } from '@mui/material';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
@@ -25,8 +26,8 @@ import '../../styles/header.css';
 import '../../styles/menus.css';
 
 const navItems = [
-  { key: 'home', label: 'Trang chủ', icon: <HomeOutlinedIcon /> },
-  { key: 'friends', label: 'Bạn bè', icon: <GroupsOutlinedIcon /> },
+  { key: 'home', label: 'Trang chủ', icon: <HomeOutlinedIcon />, path: '/home' },
+  { key: 'friends', label: 'Bạn bè', icon: <GroupsOutlinedIcon />, path: '/friends' },
   { key: 'videos', label: 'Video', icon: <OndemandVideoOutlinedIcon /> },
   { key: 'groups', label: 'Nhóm', icon: <GroupsOutlinedIcon /> },
   { key: 'market', label: 'Marketplace', icon: <StorefrontOutlinedIcon /> },
@@ -48,10 +49,36 @@ function HomeHeader() {
   const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
   const [notificationLoading, setNotificationLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [receivedRequestCount, setReceivedRequestCount] = useState(0);
   const [respondingRequestIds, setRespondingRequestIds] = useState<string[]>([]);
   const [toast, setToast] = useState('');
 
+  const navigate = useNavigate();
+  const location = useLocation();
   const headerRef = useRef<HTMLDivElement | null>(null);
+
+  const syncReceivedRequestCount = async () => {
+    try {
+      const requests = await friendService.getReceivedRequests();
+      setReceivedRequestCount(requests.filter((item) => item.status === 'PENDING').length);
+    } catch (error) {
+      console.error('Không tải được số lời mời kết bạn:', error);
+    }
+  };
+
+  useEffect(() => {
+    void syncReceivedRequestCount();
+
+    const handleFriendRequestsChanged = () => {
+      void syncReceivedRequestCount();
+    };
+
+    window.addEventListener('ducky:friend-requests-changed', handleFriendRequestsChanged);
+
+    return () => {
+      window.removeEventListener('ducky:friend-requests-changed', handleFriendRequestsChanged);
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -125,6 +152,10 @@ function HomeHeader() {
         });
 
         setUnreadCount((prev) => prev + 1);
+
+        if (notification.type === 'FRIEND_REQUEST') {
+          void syncReceivedRequestCount();
+        }
       },
       (message) => {
         console.error('WebSocket notification error:', message);
@@ -202,6 +233,8 @@ function HomeHeader() {
 
       // Không gọi markAsRead ở đây vì BE có thể đã xóa notification lời mời sau khi accept.
       removeFriendRequestNotifications(notification);
+      setReceivedRequestCount((prev) => Math.max(0, prev - 1));
+      window.dispatchEvent(new CustomEvent('ducky:friend-requests-changed'));
       setToast('Đã chấp nhận lời mời kết bạn');
     } catch (error) {
       console.error('Không thể chấp nhận lời mời:', error);
@@ -223,6 +256,8 @@ function HomeHeader() {
 
       // Không gọi markAsRead ở đây vì BE có thể đã xóa notification lời mời sau khi decline.
       removeFriendRequestNotifications(notification);
+      setReceivedRequestCount((prev) => Math.max(0, prev - 1));
+      window.dispatchEvent(new CustomEvent('ducky:friend-requests-changed'));
       setToast('Đã từ chối lời mời kết bạn');
     } catch (error) {
       console.error('Không thể từ chối lời mời:', error);
@@ -237,7 +272,7 @@ function HomeHeader() {
       <AppBar position="sticky" color="inherit" elevation={1} className="fb-header-appbar">
         <Toolbar className="fb-header-toolbar" ref={headerRef}>
           <Box className="fb-header-left">
-            <Box className="fb-brand" component="a" href="/">
+            <Box className="fb-brand" component="button" type="button" onClick={() => navigate('/home')}>
               <Box className="fb-brand-logo">
                 <SmartToyOutlinedIcon />
               </Box>
@@ -248,13 +283,39 @@ function HomeHeader() {
           </Box>
 
           <Box className="fb-header-center">
-            {navItems.map((item, index) => (
-              <Tooltip title={item.label} key={item.key}>
-                <button type="button" className={`fb-nav-btn ${index === 0 ? 'active' : ''}`}>
-                  {item.icon}
-                </button>
-              </Tooltip>
-            ))}
+            {navItems.map((item) => {
+              const isActive =
+                item.key === 'home'
+                  ? location.pathname === '/home'
+                  : 'path' in item && item.path
+                    ? location.pathname.startsWith(item.path)
+                    : false;
+
+              const icon =
+                item.key === 'friends' ? (
+                  <Badge badgeContent={receivedRequestCount} color="error" max={99}>
+                    {item.icon}
+                  </Badge>
+                ) : (
+                  item.icon
+                );
+
+              return (
+                <Tooltip title={item.label} key={item.key}>
+                  <button
+                    type="button"
+                    className={`fb-nav-btn ${isActive ? 'active' : ''}`}
+                    onClick={() => {
+                      if ('path' in item && item.path) {
+                        navigate(item.path);
+                      }
+                    }}
+                  >
+                    {icon}
+                  </button>
+                </Tooltip>
+              );
+            })}
           </Box>
 
           <Box className="fb-header-right">

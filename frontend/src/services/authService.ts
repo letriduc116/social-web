@@ -3,6 +3,7 @@ import type {
   AuthResponse,
   CheckMailProps,
   LoginProps,
+  GoogleLoginProps,
   RegisterProps,
   ResetPasswordProps,
   SendOtpProps,
@@ -21,6 +22,18 @@ const unwrapAuth = (response: ApiResponse<AuthResponse> | AuthResponse): AuthRes
 
 const login = async (data: LoginProps): Promise<AuthResponse> => {
   const response = await ApiService.post<ApiResponse<AuthResponse> | AuthResponse>(`${API_URL}/login`, data);
+  const authData = unwrapAuth(response);
+
+  if (authData.accessToken) {
+    ApiService.setTokens(authData.accessToken);
+    localStorage.setItem('user', JSON.stringify(authData));
+  }
+
+  return authData;
+};
+
+const loginWithGoogle = async (data: GoogleLoginProps): Promise<AuthResponse> => {
+  const response = await ApiService.post<ApiResponse<AuthResponse> | AuthResponse>(`${API_URL}/google`, data);
   const authData = unwrapAuth(response);
 
   if (authData.accessToken) {
@@ -68,6 +81,7 @@ const logout = (): void => {
 
 export const authService = {
   login,
+  loginWithGoogle,
   register,
   checkMail,
   sendOtp,

@@ -1,5 +1,5 @@
 import { ApiService } from './api';
-import type { FriendRequestResponse, FriendshipStatusResponse } from '../types/friend';
+import type { FriendRequestResponse, FriendshipStatusResponse, FriendSummary } from '../types/friend';
 
 type ApiWrap<T> = {
   status?: number;
@@ -117,6 +117,22 @@ const followFriendAgain = async (targetUserId: string): Promise<FriendshipStatus
   };
 };
 
+const normalizeFriend = (friend: FriendSummary): FriendSummary => ({
+  ...friend,
+  profileImage: friend.profileImage || friend.avatarUrl || '',
+  following: friend.following ?? true,
+});
+
+const getFriends = async (userId?: string): Promise<FriendSummary[]> => {
+  const response = await ApiService.get<ApiWrap<FriendSummary[]> | FriendSummary[]>(
+    API_URL,
+    userId ? { userId } : undefined,
+  );
+
+  const data = unwrap(response);
+  return Array.isArray(data) ? data.map(normalizeFriend) : [];
+};
+
 export const friendService = {
   sendRequest,
   acceptRequest,
@@ -124,6 +140,7 @@ export const friendService = {
   cancelRequest,
   getFriendshipStatus,
   getReceivedRequests,
+  getFriends,
   unfriend,
   unfollowFriend,
   followFriendAgain,

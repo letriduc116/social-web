@@ -98,12 +98,13 @@ const getPostsByUserId = async (userId: string): Promise<PostItem[]> => {
   }
 };
 
-const getSavedPosts = async (): Promise<SavedPostProfile[]> => {
+const getSavedPosts = async (): Promise<PostItem[]> => {
   const response = await ApiService.get<ApiResponse<SavedPostProfile[]> | SavedPostProfile[]>(`${API_URL}/saved`, {
     userId: authStorage.getCurrentUserId(),
   });
 
-  return unwrap(response) || [];
+  const savedPosts = unwrap(response) || [];
+  return savedPosts.map(savedPostProfileToPostItem);
 };
 
 const likePost = async (postId: string): Promise<void> => {
@@ -141,6 +142,26 @@ const unsavePost = async (postId: string): Promise<void> => {
     },
   });
 };
+
+const savedPostProfileToPostItem = (post: SavedPostProfile): PostItem => ({
+  id: post.id,
+  content: post.content || '',
+  createAt: post.createdAt,
+  images: post.imageUrls || [],
+  comments: post.commentCount || 0,
+  likes: post.likeCount || 0,
+  liked: false,
+  savedPost: true,
+  visibility: post.visibility,
+  shared: Boolean(post.shared),
+  sharedPost: post.sharedPost ? savedPostProfileToPostItem(post.sharedPost) : null,
+  user: {
+    id: post.userId,
+    userName: post.userName,
+    fullName: post.userName,
+    profileImage: post.avatarUrl,
+  },
+});
 
 const deletePost = async (postId: string): Promise<void> => {
   await ApiService.delete<ApiResponse<null>>(API_URL, {
@@ -246,6 +267,7 @@ export const postService = {
   likePost,
   unlikePost,
   savePost,
+  savedPostProfileToPostItem,
   unsavePost,
   deletePost,
   updatePost,

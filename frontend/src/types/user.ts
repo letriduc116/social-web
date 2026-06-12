@@ -48,7 +48,7 @@ export interface UserProfileResponse {
   posts: ProfilePost[];
 }
 
-export type ProfileTabKey = 'posts' | 'about' | 'followers' | 'following';
+export type ProfileTabKey = 'posts' | 'about' | 'friends' | 'followers' | 'following';
 
 export interface UserSearchResult {
   id: string;
