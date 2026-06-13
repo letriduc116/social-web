@@ -10,6 +10,7 @@ import {
   ListItemButton,
   ListItemText,
 } from '@mui/material';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import HeaderMenu from './HeaderMenu';
@@ -20,7 +21,11 @@ type MessengerMenuProps = {
 };
 
 function MessengerMenu({ onClose }: MessengerMenuProps) {
-  const { conversations, loadingConversations, openMiniChat } = useMiniChat();
+  const { conversations, loadingConversations, openMiniChat, refreshConversations } = useMiniChat();
+
+  useEffect(() => {
+    void refreshConversations();
+  }, [refreshConversations]);
 
   const handleOpenConversation = (conversationId: string) => {
     void openMiniChat(conversationId);

@@ -3,6 +3,7 @@ import MiniChatWindow from '../components/chat/MiniChatWindow';
 import ChatCallProvider from './ChatCallContext';
 import { useChatCall } from '../hook/useChatCall';
 import { MiniChatContext } from '../services/miniChatStore';
+import { authStorage } from '../services/authStorage';
 import { buildChatPreview, chatService, resolveAttachmentType } from '../services/chatService';
 import {
   isChatSocketConnected,
@@ -87,6 +88,7 @@ function MiniChatProviderInner({ children }: MiniChatProviderProps) {
   const conversationsRef = useRef<ChatConversation[]>([]);
   const openChatsRef = useRef<OpenMiniChat[]>([]);
   const typingTimerMapRef = useRef<Record<string, number>>({});
+  const activeUserIdRef = useRef('');
 
   useEffect(() => {
     conversationsRef.current = conversations;
@@ -95,6 +97,33 @@ function MiniChatProviderInner({ children }: MiniChatProviderProps) {
   useEffect(() => {
     openChatsRef.current = openChats;
   }, [openChats]);
+
+
+  const resetMiniChatState = useCallback(() => {
+    Object.values(typingTimerMapRef.current).forEach((timerId) => window.clearTimeout(timerId));
+    typingTimerMapRef.current = {};
+    conversationsRef.current = [];
+    openChatsRef.current = [];
+    setConversations([]);
+    setOpenChats([]);
+  }, []);
+
+  const ensureCurrentUserContext = useCallback(() => {
+    let currentUserId = '';
+
+    try {
+      currentUserId = authStorage.getCurrentUserId();
+    } catch {
+      currentUserId = '';
+    }
+
+    if (activeUserIdRef.current && activeUserIdRef.current !== currentUserId) {
+      resetMiniChatState();
+    }
+
+    activeUserIdRef.current = currentUserId;
+    return currentUserId;
+  }, [resetMiniChatState]);
 
   const sendPayload = useCallback(async (payload: SendMessagePayload) => {
     const sentBySocket = isChatSocketConnected() && sendChatMessageSocket(payload);
@@ -106,20 +135,37 @@ function MiniChatProviderInner({ children }: MiniChatProviderProps) {
   }, []);
 
   const refreshConversations = useCallback(async () => {
+    const requestUserId = ensureCurrentUserContext();
+
+    if (!requestUserId) {
+      resetMiniChatState();
+      setLoadingConversations(false);
+      return;
+    }
+
     try {
       setLoadingConversations(true);
       const data = await chatService.getConversations();
+
+      if (activeUserIdRef.current !== requestUserId) return;
+
       setConversations(sortConversations(data));
     } catch (error) {
       console.error('Không tải được danh sách mini chat:', error);
     } finally {
-      setLoadingConversations(false);
+      if (activeUserIdRef.current === requestUserId) {
+        setLoadingConversations(false);
+      }
     }
-  }, []);
+  }, [ensureCurrentUserContext, resetMiniChatState]);
 
   const loadMessages = useCallback(async (conversationId: string) => {
+    const requestUserId = activeUserIdRef.current;
+
     try {
       const messages = await chatService.getMessages(conversationId, 0, 30);
+
+      if (activeUserIdRef.current !== requestUserId) return;
 
       setConversations((prev) =>
         prev.map((conversation) =>
@@ -189,11 +235,17 @@ function MiniChatProviderInner({ children }: MiniChatProviderProps) {
     async (conversationIdOrReceiverId: string) => {
       if (!conversationIdOrReceiverId) return;
 
+      const requestUserId = ensureCurrentUserContext();
+      if (!requestUserId) return;
+
       let conversation = conversationsRef.current.find((item) => item.id === conversationIdOrReceiverId);
 
       if (!conversation) {
         try {
           conversation = await chatService.openPrivateConversation(conversationIdOrReceiverId);
+
+          if (activeUserIdRef.current !== requestUserId) return;
+
           setConversations((prev) => upsertConversation(prev, conversation as ChatConversation));
         } catch (error) {
           console.error('Không mở được đoạn chat:', error);
@@ -225,7 +277,7 @@ function MiniChatProviderInner({ children }: MiniChatProviderProps) {
 
       void loadMessages(conversationId);
     },
-    [loadMessages],
+    [ensureCurrentUserContext, loadMessages],
   );
 
   const closeMiniChat = useCallback((conversationId: string) => {

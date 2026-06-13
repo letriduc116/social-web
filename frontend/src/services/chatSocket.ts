@@ -16,6 +16,7 @@ type ChatSocketHandlers = {
 };
 
 let stompClient: Client | null = null;
+let socketToken = '';
 const subscribers = new Set<ChatSocketHandlers>();
 
 const getAccessToken = () => localStorage.getItem(ACCESS_TOKEN_KEY)?.trim() || '';
@@ -47,14 +48,7 @@ const normalizeSocketConversation = (conversation: ChatConversation): ChatConver
   messages: (conversation.messages || []).map(normalizeSocketMessage),
 });
 
-const createClient = () => {
-  const token = getAccessToken();
-
-  if (!token) {
-    emit('onError', new Error('Không tìm thấy accessToken để kết nối chat WebSocket'));
-    return null;
-  }
-
+const createClient = (token: string) => {
   const client = new Client({
     webSocketFactory: () => new SockJS(WS_URL),
     connectHeaders: {
@@ -96,8 +90,22 @@ const createClient = () => {
 };
 
 const ensureSocket = () => {
-  if (stompClient?.active) return;
-  stompClient = createClient();
+  const token = getAccessToken();
+
+  if (!token) {
+    emit('onError', new Error('Không tìm thấy accessToken để kết nối chat WebSocket'));
+    return;
+  }
+
+  if (stompClient?.active && socketToken === token) return;
+
+  if (stompClient?.active || stompClient?.connected) {
+    void stompClient.deactivate();
+    stompClient = null;
+  }
+
+  socketToken = token;
+  stompClient = createClient(token);
 };
 
 export const subscribeChatSocket = (handlers: ChatSocketHandlers) => {
@@ -110,6 +118,7 @@ export const subscribeChatSocket = (handlers: ChatSocketHandlers) => {
     if (subscribers.size === 0) {
       void stompClient?.deactivate();
       stompClient = null;
+      socketToken = '';
     }
   };
 };
